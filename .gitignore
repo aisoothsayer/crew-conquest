@@ -1,0 +1,10 @@
+**/node_modules/
+**/.env
+**/.env.*
+**/.npmrc
+**/*.log
+**/static/
+**/proprietary/
+*.zip
+**/.DS_Store
+**/coverage/

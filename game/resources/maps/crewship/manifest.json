@@ -1,0 +1,90 @@
+{
+  "id": "CrewShip",
+  "name": "Crew Ship",
+  "translation_key": "map.crewship",
+  "categories": [
+    "fictional"
+  ],
+  "multiplayer_frequency": 0,
+  "nations": [
+    {
+      "name": "Bot 1",
+      "flag": "",
+      "coordinates": [
+        512,
+        250
+      ]
+    },
+    {
+      "name": "Bot 2",
+      "flag": "",
+      "coordinates": [
+        370,
+        420
+      ]
+    },
+    {
+      "name": "Bot 3",
+      "flag": "",
+      "coordinates": [
+        654,
+        420
+      ]
+    },
+    {
+      "name": "Bot 4",
+      "flag": "",
+      "coordinates": [
+        512,
+        760
+      ]
+    },
+    {
+      "name": "Bot 5",
+      "flag": "",
+      "coordinates": [
+        512,
+        980
+      ]
+    },
+    {
+      "name": "Bot 6",
+      "flag": "",
+      "coordinates": [
+        512,
+        1230
+      ]
+    },
+    {
+      "name": "Bot 7",
+      "flag": "",
+      "coordinates": [
+        246,
+        1130
+      ]
+    },
+    {
+      "name": "Bot 8",
+      "flag": "",
+      "coordinates": [
+        778,
+        1130
+      ]
+    }
+  ],
+  "map": {
+    "width": 1024,
+    "height": 1536,
+    "num_land_tiles": 547267
+  },
+  "map4x": {
+    "width": 512,
+    "height": 768,
+    "num_land_tiles": 136558
+  },
+  "map16x": {
+    "width": 256,
+    "height": 384,
+    "num_land_tiles": 34146
+  }
+}
