@@ -147,7 +147,7 @@ describe("HostLobbyModal Steam invite button", () => {
     await vi.waitFor(() => expect(editable.nations).toBe(5));
     editable.bots = 99;
     await editable.putGameConfig();
-    expect(updates.at(-1)).toMatchObject({
+    expect(updates[updates.length - 1]).toMatchObject({
       gameMap: GameMapType.UnitedStates,
       bots: 99,
       nations: 5,
