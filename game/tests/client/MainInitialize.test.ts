@@ -652,6 +652,48 @@ describe("Client.initialize() booted from Main.ts module scope", () => {
     });
   });
 
+  it("joins a Crew successor before the identity display loads, but waits for authenticated admission", async () => {
+    const input = document.querySelector("username-input") as unknown as {
+      canPlay: () => boolean;
+    };
+    const previousCanPlay = input.canPlay;
+    const previousAuth = mocks.userAuth.getMockImplementation();
+    let admit: (value: unknown) => void = () => {};
+    const admission = new Promise<unknown>((resolve) => {
+      admit = resolve;
+    });
+    input.canPlay = () => false;
+    mocks.userAuth.mockImplementation(() => admission);
+    mocks.userAuth.mockClear();
+    mocks.joinLobby.mockClear();
+    mocks.joinLobby.mockReturnValue({
+      prestart: new Promise(() => {}),
+      join: new Promise(() => {}),
+      stop: vi.fn(),
+    });
+    vi.stubEnv("CREW_TWITCH_ONLY", "true");
+    try {
+      document.dispatchEvent(
+        new CustomEvent("join-lobby", {
+          detail: { gameID: "AbCd1234", source: "host" },
+          bubbles: true,
+        }),
+      );
+      await vi.waitFor(() => expect(mocks.userAuth).toHaveBeenCalledWith(true));
+      expect(mocks.joinLobby).not.toHaveBeenCalled();
+      admit({ token: "fixture-admission", claims: { role: "crew-host" } });
+      await vi.waitFor(() => expect(mocks.joinLobby).toHaveBeenCalledTimes(1));
+      expect(mocks.joinLobby.mock.calls[0][1]).toMatchObject({
+        gameID: "AbCd1234",
+        playerRole: "crew-host",
+      });
+    } finally {
+      input.canPlay = previousCanPlay;
+      if (previousAuth) mocks.userAuth.mockImplementation(previousAuth);
+      vi.unstubAllEnvs();
+    }
+  });
+
   // Last: the viewer replaces the menu, and any later hash change would
   // then leave the page.
   it("opens the replay viewer when the hash changes to one, though closing the join modal resets the URL", async () => {

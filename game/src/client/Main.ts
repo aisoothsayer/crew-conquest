@@ -1555,7 +1555,14 @@ class Client {
 
   private async handleJoinLobby(event: CustomEvent<JoinLobbyEvent>) {
     const lobby = event.detail;
-    if (this.usernameInput && !this.usernameInput.canPlay()) {
+    // A successor lobby opens during boot, before userMeResponse has filled
+    // the Twitch identity display. Crew admission awaits userAuth below and
+    // the server supplies the verified name; the display is not an auth gate.
+    if (
+      process.env.CREW_TWITCH_ONLY !== "true" &&
+      this.usernameInput &&
+      !this.usernameInput.canPlay()
+    ) {
       // The singleplayer modal shows the starting overlay before dispatching
       // join-lobby; a refused join must release it or it stays over the menu.
       const startingModal = document.querySelector("game-starting-modal");

@@ -2,7 +2,7 @@
 
 A Twitch-connected strategy game for AI Soothsayer's crew, adapted from OpenFront. Danny hosts; Twitch viewers join with their names and profile pictures. Modes include host-placed solo bots, viewer-placed autonomous factions, and active multiplayer.
 
-This is release candidate `CREW-20261012-9`. The game remains a local beta until its Linux build, public hosting and remote Twitch sign-in tests pass.
+This is release candidate `CREW-20261012-10`. The game remains a local beta until its Linux build, public hosting and remote Twitch sign-in tests pass.
 
 ## Source layout
 
