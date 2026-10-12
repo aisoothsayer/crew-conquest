@@ -102,3 +102,69 @@ test("malformed bot placements fail rather than silently spawning somewhere else
     createGameRunner(info, undefined, files(), () => {}),
   ).rejects.toThrow("Invalid placed bot spawn");
 });
+
+test("preplaced active factions remain controllable humans and cannot relocate after Start", async () => {
+  const original = start();
+  const info = {
+    ...original,
+    config: {
+      ...original.config,
+      gameType: GameType.Private,
+      crewMode: "active" as const,
+    },
+    players: original.players.map(
+      ({
+        botSpawn,
+        ...player
+      }: {
+        botSpawn: { x: number; y: number };
+        clientID: string;
+        username: string;
+        clanTag: null;
+      }) => ({
+        ...player,
+        initialSpawn: botSpawn,
+      }),
+    ),
+  };
+  const runner = await createGameRunner(
+    info,
+    info.players[0].clientID,
+    files(),
+    () => {},
+  );
+  for (let tick = 0; tick < 3; tick++) {
+    runner.addTurn({ turnNumber: tick, intents: [] });
+    runner.executeNextTick();
+  }
+  for (const player of info.players) {
+    const human = runner.game.playerByClientID(player.clientID)!;
+    expect(human.type()).toBe(PlayerType.Human);
+    expect(human.spawnTile()).toBe(
+      runner.game.ref(player.initialSpawn.x, player.initialSpawn.y),
+    );
+  }
+  const first = info.players[0];
+  const other = files().manifest.nations[2].coordinates;
+  runner.addTurn({
+    turnNumber: 3,
+    intents: [
+      {
+        type: "spawn",
+        clientID: first.clientID,
+        tile: runner.game.ref(
+          Math.floor(other[0] / 2),
+          Math.floor(other[1] / 2),
+        ),
+      },
+    ],
+  });
+  runner.executeNextTick();
+  for (let tick = 4; tick < 6; tick++) {
+    runner.addTurn({ turnNumber: tick, intents: [] });
+    runner.executeNextTick();
+  }
+  expect(runner.game.playerByClientID(first.clientID)!.spawnTile()).toBe(
+    runner.game.ref(first.initialSpawn.x, first.initialSpawn.y),
+  );
+});

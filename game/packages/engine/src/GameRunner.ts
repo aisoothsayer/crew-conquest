@@ -29,6 +29,7 @@ import { EngineConfig } from "./configuration/EngineConfig";
 import { DoomsdayClockExecution } from "./execution/DoomsdayClockExecution";
 import { Executor } from "./execution/ExecutionManager";
 import { RecomputeRailClusterExecution } from "./execution/RecomputeRailClusterExecution";
+import { SpawnExecution } from "./execution/SpawnExecution";
 import { SpawnTimerExecution } from "./execution/SpawnTimerExecution";
 import { WinCheckExecution } from "./execution/WinCheckExecution";
 import { Game, Player } from "./game/Game";
@@ -117,6 +118,25 @@ export async function createGameRunner(
     callBack,
   );
   gr.init();
+  for (const p of gameStart.players.filter((p) => p.initialSpawn)) {
+    const point = p.initialSpawn!;
+    const human = humans.find((h) => h.clientID === p.clientID);
+    if (
+      !human ||
+      point.x >= gameMap.gameMap.width() ||
+      point.y >= gameMap.gameMap.height() ||
+      !gameMap.gameMap.isLand(gameMap.gameMap.ref(point.x, point.y))
+    ) {
+      throw new Error("Invalid placed human spawn");
+    }
+    game.addExecution(
+      new SpawnExecution(
+        gameStart.gameID,
+        human,
+        gameMap.gameMap.ref(point.x, point.y),
+      ),
+    );
+  }
   return gr;
 }
 

@@ -506,18 +506,23 @@ export class SinglePlayerModal extends BaseModal {
           class="flex-1 min-h-0 overflow-y-auto custom-scrollbar px-6 pt-4 pb-6 mr-1 mx-auto w-full max-w-5xl"
         >
           ${process.env.CREW_TWITCH_ONLY === "true"
-            ? html`<label class="block mb-4"
-                ><input
-                  type="checkbox"
-                  .checked=${this.crewBotSimulation}
-                  @change=${(event: Event) => {
-                    this.selectCrewBotSimulation(
-                      (event.target as HTMLInputElement).checked,
-                    );
-                  }}
-                />
-                ${translateText("crew.bot_simulation")}</label
-              >`
+            ? html`<p class="mb-4">
+                  Solo practice: you play against AI opponents. Choose your map
+                  and opponent counts below. Turn on Bot simulation to watch
+                  instead of playing.
+                </p>
+                <label class="block mb-4"
+                  ><input
+                    type="checkbox"
+                    .checked=${this.crewBotSimulation}
+                    @change=${(event: Event) => {
+                      this.selectCrewBotSimulation(
+                        (event.target as HTMLInputElement).checked,
+                      );
+                    }}
+                  />
+                  ${translateText("crew.bot_simulation")}</label
+                >`
             : null}
           ${this.crewBotSimulation
             ? html`<p>${translateText("crew.bot_strategy_help")}</p>

@@ -91,6 +91,20 @@ export async function startWorker() {
     workerId,
   });
   const gm = new GameManager(log, telemetry, buildHash);
+  app.get("/api/crew-observer/current", (req, res) => {
+    if (
+      process.env.CREW_TWITCH_ONLY !== "true" ||
+      req.headers["x-api-key"] !== ServerEnv.apiKey()
+    ) {
+      res.status(403).json({ error: "Forbidden" });
+      return;
+    }
+    res.setHeader("Cache-Control", "no-store");
+    const match = gm.currentCrewMatch();
+    res.json(
+      match ? { ...match, path: `/w${workerId}/game/${match.gameID}` } : null,
+    );
+  });
   server.on("close", () => telemetry.stop());
 
   // Initialize lobby service (handles WebSocket upgrade routing)
@@ -616,6 +630,13 @@ export async function startWorker() {
           return;
         }
         const { persistentId, claims } = result;
+        if (
+          claims?.role === "crew-observer" &&
+          claims.observerGameID !== clientMsg.gameID
+        ) {
+          ws.close(CloseCode.Unauthorized, CloseReason.InvalidToken);
+          return;
+        }
         if (process.env.CREW_TWITCH_ONLY === "true")
           crewToken = clientMsg.token;
 
@@ -889,7 +910,7 @@ export async function startWorker() {
           cosmeticResult.cosmetics,
           publicId,
           friends,
-          clientMsg.spectator === true,
+          clientMsg.spectator === true || claims?.role === "crew-observer",
           trusted,
           clientMsg.platform,
           levelBadge,

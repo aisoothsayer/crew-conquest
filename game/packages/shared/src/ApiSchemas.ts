@@ -48,6 +48,10 @@ export const TokenPayloadSchema = z.object({
     .or(z.string())
     .optional(),
   provider: z.string().optional(),
+  observerGameID: z
+    .string()
+    .regex(/^[A-Za-z0-9]{8,10}$/)
+    .optional(),
 });
 export type TokenPayload = z.infer<typeof TokenPayloadSchema>;
 

@@ -415,9 +415,16 @@ export async function userAuth(
 ): Promise<UserAuth> {
   if (process.env.CREW_TWITCH_ONLY === "true") {
     try {
-      const response = await fetch("/crew-api/session", {
-        signal: AbortSignal.timeout(5000),
-      });
+      const observer = new URLSearchParams(window.location.search).has("obs");
+      const gameID = window.location.pathname.split("/").pop();
+      const response = await fetch(
+        observer
+          ? `/crew-api/observer-session?gameID=${encodeURIComponent(gameID ?? "")}`
+          : "/crew-api/session",
+        {
+          signal: AbortSignal.timeout(5000),
+        },
+      );
       if (!response.ok) {
         __jwt = null;
         return false;

@@ -136,6 +136,12 @@ export class SocketIngress {
       return;
     }
     const clientMsg = parsed.data;
+    if (
+      client.role === "crew-observer" &&
+      clientMsg.type !== "ping" &&
+      clientMsg.type !== "rejoin"
+    )
+      return;
     const bytes = message.length;
     const rateResult = this.rateLimiter.check(
       client.clientID,

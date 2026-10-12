@@ -64,15 +64,25 @@ class TwitchAuth {
     const parts=ticket.split('.');if(parts.length!==3)deny('Sign in with Twitch to play.');
     let header,payload;try{header=JSON.parse(Buffer.from(parts[0],'base64url'));payload=JSON.parse(Buffer.from(parts[1],'base64url'));}catch{deny('Invalid game ticket.');}
     if(header.alg!=='EdDSA'||!verify(null,Buffer.from(parts[0]+'.'+parts[1]),this.publicKey,Buffer.from(parts[2],'base64url')))deny('Invalid game ticket signature.');
+    if(payload.provider==='crew-observer'){
+      if(payload.role!=='crew-observer'||payload.iss!==this.issuer||payload.aud!==this.audience||!/^\w{8,10}$/.test(payload.observerGameID||'')||!Number.isFinite(payload.exp)||payload.exp<=this.now()/1000)deny('Observer ticket expired.');
+      return {sid:null,subject:payload.sub,user:{name:'Stream View',login:'streamview',canHost:false},claims:payload};
+    }
     this.sweep();const s=this.sessions.get(payload.sid);
     if(!s||payload.provider!=='twitch'||payload.iss!==this.issuer||payload.aud!==this.audience||payload.sub!==s.subject||!Number.isFinite(payload.exp)||(!admittedSocket&&payload.exp<=this.now()/1000))deny('Game ticket expired or was revoked.');
     return {sid:payload.sid,subject:s.subject,user:s.user,expires:s.expires,claims:payload};
   }
-  async validate(sid){const s=this.sessions.get(sid);if(!s||s.expires<=this.now()){this.revoke(sid);deny('Sign in again.');}if(this.now()-s.validated<3600000)return;
+  issueObserver(gameID,viewerID){
+    if(!/^[A-Za-z0-9]{8,10}$/.test(gameID))deny('Invalid observer room.');
+    const now=Math.floor(this.now()/1000),payload={iss:this.issuer,aud:this.audience,sub:identity('observer:'+viewerID),jti:randomBytes(16).toString('base64url'),iat:now,exp:now+14400,provider:'crew-observer',role:'crew-observer',observerGameID:gameID};
+    const body=[{alg:'EdDSA',typ:'JWT'},payload].map(v=>Buffer.from(JSON.stringify(v)).toString('base64url')).join('.');
+    return body+'.'+sign(null,Buffer.from(body),this.privateKey).toString('base64url');
+  }
+  async validate(sid){if(sid===null)return;const s=this.sessions.get(sid);if(!s||s.expires<=this.now()){this.revoke(sid);deny('Sign in again.');}if(this.now()-s.validated<3600000)return;
     try{const v=await this.json('https://id.twitch.tv/oauth2/validate',{headers:{Authorization:'OAuth '+s.token}});if(v.client_id!==this.config.clientId||v.user_id!==s.user.twitchId||v.expires_in<=0)throw new Error('revoked');s.validated=this.now();s.expires=Math.min(s.expires,this.now()+v.expires_in*1000);}catch{this.revoke(sid);deny('Twitch sign-in expired. Sign in again.');}}
   revoke(sid){if(this.sessions.delete(sid))for(const fn of this.listeners)fn(sid);}
   onRevoke(fn){this.listeners.add(fn);return ()=>this.listeners.delete(fn);}
   logout(req){const {sid,session}=this.session(req);this.mutation(req,session);this.revoke(sid);return this.cookie('crew_session','',0);}
   publicKeys(){return {keys:[{...this.publicKey.export({format:'jwk'}),alg:'EdDSA',use:'sig'}]};}
 }
-module.exports={TwitchAuth,identity,publicUser,safeReturnTo};
+module.exports={TwitchAuth,identity,publicUser,safeReturnTo,cookieValue};

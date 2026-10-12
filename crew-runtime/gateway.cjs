@@ -2,6 +2,8 @@
 const http=require('node:http');
 const {randomInt}=require('node:crypto');
 const {inviteGate}=require('./invite-gate.cjs');
+const {readFileSync}=require('node:fs');
+const path=require('node:path');
 function route(url,workers=1,websocket=false){
  const u=new URL(url,'http://localhost');
  if(/^\/(?:auth)(?:\/|$)/.test(u.pathname))return {port:9120,path:u.pathname+u.search};
@@ -18,6 +20,7 @@ function route(url,workers=1,websocket=false){
 function createGateway({workers=1,identityOrigin='http://127.0.0.1:9120'}={}){
  const gate=inviteGate(identityOrigin);
  const server=http.createServer((req,res)=>{
+  if(req.method==='GET'&&req.url?.split('?')[0]==='/watch/current'){res.writeHead(200,{'Content-Type':'text/html; charset=utf-8','Cache-Control':'no-store'});res.end(readFileSync(path.join(__dirname,'watch.html')));return;}
   if(req.url==='/health'){const upstream=http.request({hostname:'127.0.0.1',port:3000,path:'/api/health'},r=>{res.writeHead(r.statusCode,{'Content-Type':'application/json','Cache-Control':'no-store'});r.pipe(res);});upstream.on('error',()=>{res.writeHead(503);res.end('Starting Crew Conquest');});upstream.end();return;}
   gate(req,res,()=>{
    const target=route(req.url,workers);if(!target){res.writeHead(404);return res.end('Room route unavailable.');}

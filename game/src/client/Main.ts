@@ -411,7 +411,12 @@ class Client {
     ]).then(
       ([{ audioMixer, initAudioMixer }, { startMenuMusic }]) => {
         if (audioMixer() === null) {
-          startMenuMusic(initAudioMixer(this.userSettings), {
+          const mixer = initAudioMixer(this.userSettings);
+          if (new URLSearchParams(window.location.search).has("obs")) {
+            void import("howler").then(({ Howler }) => Howler.mute(true));
+            return;
+          }
+          startMenuMusic(mixer, {
             gameInProgress: this.menuTornDown,
           });
         }

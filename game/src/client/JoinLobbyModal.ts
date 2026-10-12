@@ -264,10 +264,12 @@ export class JoinLobbyModal extends BaseModal {
                       .hiddenCode=${!new UserSettings().lobbyIdVisibility()}
                     ></crew-invite>`
                   : nothing}
-                ${this.gameConfig && this.gameConfig.crewMode !== "viewer-bots"
+                ${process.env.CREW_TWITCH_ONLY !== "true" &&
+                this.gameConfig &&
+                this.gameConfig.crewMode !== "viewer-bots"
                   ? this.renderGameConfig()
                   : html``}
-                ${this.gameConfig?.crewMode === "viewer-bots"
+                ${process.env.CREW_TWITCH_ONLY === "true" && this.gameConfig
                   ? html`<h3>${getMapName(this.gameConfig.gameMap)}</h3>
                       <p>
                         ${translateText("crew.bot_difficulty")}:
@@ -275,7 +277,11 @@ export class JoinLobbyModal extends BaseModal {
                           `difficulty.${this.gameConfig.difficulty.toLowerCase()}`,
                         )}
                       </p>
-                      <p>${translateText("crew.viewer_placement_help")}</p>
+                      <p>
+                        ${this.gameConfig.crewMode === "viewer-bots"
+                          ? translateText("crew.viewer_placement_help")
+                          : "Choose your starting point on land. Danny starts when everyone is ready; entry and positions lock at Start."}
+                      </p>
                       <crew-map-placement
                         .map=${this.gameConfig.gameMap}
                         .mapSize=${this.gameConfig.gameMapSize}
@@ -297,7 +303,9 @@ export class JoinLobbyModal extends BaseModal {
                         @click=${() =>
                           this.eventBus?.emit(new SendCrewBotPlaceEvent(null))}
                       >
-                        ${translateText("crew.remove_my_bot")}
+                        ${this.gameConfig.crewMode === "viewer-bots"
+                          ? translateText("crew.remove_my_bot")
+                          : "Clear my starting point"}
                       </button>`
                   : nothing}
                 ${this.players.length > 0

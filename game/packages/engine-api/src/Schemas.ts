@@ -609,6 +609,7 @@ export const BotSpawnSchema = z.object({
 
 export const PlayerSchema = z.object({
   botSpawn: BotSpawnSchema.optional(),
+  initialSpawn: BotSpawnSchema.optional(),
   clientID: ID,
   username: UsernameSchema,
   clanTag: ClanTagSchema,

@@ -33,6 +33,14 @@ export class GameManager {
   public game(id: GameID): GameServer | null {
     return this.games.get(id) ?? null;
   }
+  public currentCrewMatch() {
+    return (
+      [...this.games.values()]
+        .reverse()
+        .find((g) => g.hasStarted())
+        ?.observerInfo() ?? null
+    );
+  }
 
   public publicLobbies(): GameServer[] {
     return Array.from(this.games.values()).filter(

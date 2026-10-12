@@ -50,7 +50,7 @@ import { inviteFriendsButton } from "./components/ui/InviteFriendsButton";
 import { modalHeader } from "./components/ui/ModalHeader";
 import { fetchCosmetics, InsufficientCurrency } from "./Cosmetics";
 import { crazyGamesSDK } from "./CrazyGamesSDK";
-import { SendCrewBotPlaceEvent } from "./LobbyEvents";
+import { SendCrewBotPlaceEvent, SendSpectateEvent } from "./LobbyEvents";
 import { JoinLobbyEvent } from "./Main";
 import { terrainMapFileLoader } from "./TerrainMapFileLoader";
 import { UserSettings } from "./UserSettings";
@@ -690,6 +690,82 @@ export class HostLobbyModal extends BaseModal {
                     ${translateText("crew.viewer_bot_mode")}
                   </button>
                 </div>
+                <p class="my-3">
+                  <a
+                    class="underline text-cyan-200"
+                    href="/watch/current"
+                    target="_blank"
+                    rel="noopener"
+                    >OBS match view</a
+                  >
+                  · Use this permanent URL as a 1920 × 1080 browser source.
+                  <button
+                    @click=${async () => {
+                      try {
+                        await navigator.clipboard.writeText(
+                          new URL("/watch/current", window.location.origin)
+                            .href,
+                        );
+                        showToast("OBS URL copied", "green");
+                      } catch {
+                        showToast(
+                          "Open the OBS match view and copy its address.",
+                          "red",
+                        );
+                      }
+                    }}
+                  >
+                    Copy OBS URL
+                  </button>
+                </p>
+                ${this.crewMode === "active"
+                  ? html` <h3>Starting positions</h3>
+                      <p>
+                        Everyone chooses a land starting point here. Start
+                        closes entry and locks the positions. Existing players
+                        can reconnect.
+                      </p>
+                      <label class="block my-3"
+                        ><input
+                          type="checkbox"
+                          .checked=${!this.clients.find(
+                            (c) => c.clientID === this.crewClientID,
+                          )?.spectator}
+                          @change=${(e: Event) =>
+                            this.eventBus?.emit(
+                              new SendSpectateEvent(
+                                !(e.target as HTMLInputElement).checked,
+                              ),
+                            )}
+                        />
+                        I play in this match</label
+                      >
+                      <crew-map-placement
+                        .map=${this.selectedMap}
+                        .mapSize=${this.compactMap
+                          ? GameMapSize.Compact
+                          : GameMapSize.Normal}
+                        .placements=${this.clients.filter(
+                          (c) => c.botSpawn && !c.spectator,
+                        ) as CrewPlacement[]}
+                        .ownClientID=${this.crewClientID}
+                        .enabled=${this.crewPlacementOpen &&
+                        this.lobbyStartAt === null &&
+                        !this.clients.find(
+                          (c) => c.clientID === this.crewClientID,
+                        )?.spectator}
+                        @crew-place=${(e: CustomEvent) =>
+                          this.eventBus?.emit(
+                            new SendCrewBotPlaceEvent(e.detail),
+                          )}
+                      ></crew-map-placement>
+                      <p>
+                        ${this.clients.filter((c) => c.botSpawn && !c.spectator)
+                          .length}
+                        players ready. At least two players must place their
+                        starting points.
+                      </p>`
+                  : nothing}
                 ${this.crewMode === "viewer-bots"
                   ? html`<p>${translateText("crew.viewer_placement_help")}</p>
                       <label class="block my-3">
@@ -803,6 +879,7 @@ export class HostLobbyModal extends BaseModal {
               ></crew-invite>`
             : nothing}
           <game-config-settings
+            ?inert=${this.lobbyStartAt !== null}
             style=${this.crewMode === "viewer-bots" ? "display:none" : ""}
             class="block ${this.publiclyListed ? "opacity-60" : ""}"
             ?inert=${this.publiclyListed}
@@ -841,10 +918,15 @@ export class HostLobbyModal extends BaseModal {
                     labelKey: "game_settings.instant_build",
                     checked: this.instantBuild,
                   },
-                  {
-                    labelKey: "game_settings.random_spawn",
-                    checked: this.randomSpawn,
-                  },
+                  ...(process.env.CREW_TWITCH_ONLY === "true" &&
+                  this.crewMode === "active"
+                    ? []
+                    : [
+                        {
+                          labelKey: "game_settings.random_spawn",
+                          checked: this.randomSpawn,
+                        },
+                      ]),
                   {
                     labelKey: "host_modal.donate_gold",
                     checked: this.donateGold,
@@ -963,7 +1045,8 @@ export class HostLobbyModal extends BaseModal {
               (this.crewMode === "viewer-bots"
                 ? this.clients.filter((c) => c.botSpawn && !c.spectator)
                     .length < 2
-                : this.clients.length < 2))}
+                : this.clients.filter((c) => !c.spectator).length < 2 ||
+                  this.clients.some((c) => !c.spectator && !c.botSpawn)))}
             @click=${this.toggleGameStartTimer}
           ></o-button>
         </div>
@@ -1341,7 +1424,7 @@ export class HostLobbyModal extends BaseModal {
       this.crewActiveDifficulty = undefined;
     }
     this.crewMode = mode;
-    this.crewPlacementOpen = false;
+    this.crewPlacementOpen = mode === "active";
     void this.putGameConfig();
   }
 
@@ -1995,14 +2078,17 @@ export class HostLobbyModal extends BaseModal {
 
   private async toggleGameStartTimer() {
     if (
+      this.lobbyStartAt === null &&
       this.crewMode === "viewer-bots" &&
       this.clients.filter((c) => c.botSpawn && !c.spectator).length < 2
     ) {
       showToast(translateText("crew.need_two_bots"), "red");
       return;
     }
-    this.crewPlacementOpen = false;
-    await this.putGameConfig();
+    if (this.lobbyStartAt === null) {
+      this.crewPlacementOpen = false;
+      await this.putGameConfig();
+    }
     console.log(
       `Starting private game with map: ${GameMapType[this.selectedMap as keyof typeof GameMapType]} ${this.useRandomMap ? " (Randomly selected)" : ""}`,
     );

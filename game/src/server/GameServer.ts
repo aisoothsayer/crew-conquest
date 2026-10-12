@@ -315,6 +315,14 @@ export class GameServer {
     this.id = opts.id;
     this.createdAt = opts.createdAt;
     this.gameConfig = opts.gameConfig;
+    if (
+      process.env.CREW_TWITCH_ONLY === "true" &&
+      this.gameConfig.crewMode !== "viewer-bots"
+    ) {
+      this.gameConfig.crewMode = "active";
+      this.gameConfig.crewPlacementOpen = true;
+      this.gameConfig.randomSpawn = false;
+    }
     if (this.gameConfig.crewMode === "viewer-bots") {
       this.gameConfig.bots = 0;
       this.gameConfig.nations = "disabled";
@@ -378,6 +386,11 @@ export class GameServer {
     const wasOpen = this.gameConfig.crewPlacementOpen;
     const previous = `${this.gameConfig.gameMap}:${this.gameConfig.gameMapSize}:${this.gameConfig.crewMode}`;
     applyGameConfigPatch(this.gameConfig, gameConfig);
+    if (
+      process.env.CREW_TWITCH_ONLY === "true" &&
+      this.gameConfig.crewMode === "active"
+    )
+      this.gameConfig.randomSpawn = false;
     if (this.gameConfig.crewMode === "viewer-bots") {
       this.gameConfig.bots = 0;
       this.gameConfig.nations = "disabled";
@@ -390,7 +403,7 @@ export class GameServer {
       `${this.gameConfig.gameMap}:${this.gameConfig.gameMapSize}:${this.gameConfig.crewMode}`
     ) {
       for (const c of this.clients.all().values()) c.botSpawn = undefined;
-      this.gameConfig.crewPlacementOpen = false;
+      this.gameConfig.crewPlacementOpen = this.gameConfig.crewMode === "active";
     }
     if (
       wasOpen !== this.gameConfig.crewPlacementOpen ||
@@ -404,6 +417,7 @@ export class GameServer {
   }
 
   private crewPlacementRevision = 0;
+  private crewLockedPlayers: Client[] | null = null;
   public async placeCrewBot(
     clientID: ClientID,
     position: BotSpawn | null,
@@ -417,7 +431,8 @@ export class GameServer {
       !client.spectator &&
       !this.ended &&
       this.stage === "lobby" &&
-      this.gameConfig.crewMode === "viewer-bots" &&
+      (this.gameConfig.crewMode === "viewer-bots" ||
+        this.gameConfig.crewMode === "active") &&
       this.gameConfig.crewPlacementOpen === true &&
       !this.startsAt;
     if (!allowed()) return { status: 403, error: "placement is closed" };
@@ -564,12 +579,23 @@ export class GameServer {
       }
 
       case "update_game_config": {
+        if (this.crewLockedPlayers !== null)
+          return finish({
+            status: 409,
+            error: "Cancel the start countdown before changing the room.",
+          });
         this.updateGameConfig(stamped.config);
         return finish({ status: 200 });
       }
 
       case "toggle_game_start_timer": {
+        if (!this.startsAt && !this.crewReadyToStart())
+          return finish({
+            status: 409,
+            error: "Every player must choose a starting point before Start.",
+          });
         if (
+          !this.startsAt &&
           this.gameConfig.crewMode === "viewer-bots" &&
           this.clients.active().filter((c) => c.botSpawn && !c.spectator)
             .length < 2
@@ -579,7 +605,12 @@ export class GameServer {
         this.gameConfig.crewPlacementOpen = false;
         if (this.startsAt) {
           this.startsAt = undefined;
+          this.crewLockedPlayers = null;
+          this.gameConfig.crewPlacementOpen =
+            this.gameConfig.crewMode === "active";
         } else {
+          if (process.env.CREW_TWITCH_ONLY === "true")
+            this.crewLockedPlayers = this.crewStartingPlayers();
           this.setStartsAt(
             Date.now() + (this.gameConfig.startDelay ?? 0) * 1000,
           );
@@ -657,18 +688,34 @@ export class GameServer {
     if (this.clients.isKicked(client.persistentID)) {
       return "kicked";
     }
+    if (process.env.CREW_TWITCH_ONLY === "true") {
+      if (client.role === "crew-observer") {
+        if (this.stage !== "started") return "started";
+        client.spectator = true;
+      } else if (this.stage !== "lobby" || this.startsAt !== undefined) {
+        if (this.rejoinClient(client.ws, client.persistentID, 0))
+          return "joined";
+        client.ws.send(
+          encodeServerMessage(
+            { type: "error", error: "game-started" },
+            this.zbinCtx,
+          ),
+        );
+        return "started";
+      }
+    }
 
     // OFM: if an allowlist is set, only those publicIds may join. Re-checked on
     // every join attempt. Admins/root bypass it so moderation can reach any
     // private lobby; a kick still applies (checked above).
-    if (!this.passesAllowlist(client)) {
+    if (client.role !== "crew-observer" && !this.passesAllowlist(client)) {
       this.log.warn("client not on allowlist, rejecting", {
         clientID: client.clientID,
       });
       return "not_allowlisted";
     }
 
-    if (!this.passesTrustGate(client)) {
+    if (client.role !== "crew-observer" && !this.passesTrustGate(client)) {
       this.log.warn("client not trusted, rejecting", {
         clientID: client.clientID,
       });
@@ -984,6 +1031,7 @@ export class GameServer {
     if (this.hasStarted()) {
       return;
     }
+    if (this.crewLockedPlayers?.includes(client)) return;
     // Remove persistentId if the game has not started to prevent going over max players
     this.clients.forgetReconnect(client);
     // Close lobby when host leaves before game starts: without a host it can
@@ -1091,13 +1139,45 @@ export class GameServer {
     return true;
   }
 
+  private crewStartingPlayers(): Client[] {
+    return (
+      this.crewLockedPlayers ??
+      this.clients
+        .players()
+        .filter((c) => this.gameConfig.crewMode !== "viewer-bots" || c.botSpawn)
+    );
+  }
+
+  private crewReadyToStart(): boolean {
+    if (
+      process.env.CREW_TWITCH_ONLY !== "true" ||
+      this.gameConfig.crewMode !== "active"
+    )
+      return true;
+    const players = this.crewStartingPlayers();
+    return (
+      players.length >= 2 && players.every((c) => c.botSpawn !== undefined)
+    );
+  }
+
+  public observerInfo() {
+    return {
+      gameID: this.id,
+      createdAt: this.createdAt,
+      live: this.stage === "started" && !this.ended,
+      started: this.hasStarted(),
+      map: this.gameConfig.gameMap,
+    };
+  }
+
   public prestart() {
     if (this.ended || this.hasStarted()) {
       return;
     }
+    if (!this.crewReadyToStart()) return;
     if (
       this.gameConfig.crewMode === "viewer-bots" &&
-      this.clients.active().filter((c) => c.botSpawn && !c.spectator).length < 2
+      this.crewStartingPlayers().length < 2
     )
       return;
     this.gameConfig.crewPlacementOpen = false;
@@ -1246,9 +1326,10 @@ export class GameServer {
     if (this.stage === "started" || this.ended) {
       return;
     }
+    if (!this.crewReadyToStart()) return;
     if (
       this.gameConfig.crewMode === "viewer-bots" &&
-      this.clients.active().filter((c) => c.botSpawn && !c.spectator).length < 2
+      this.crewStartingPlayers().length < 2
     )
       return;
     this.stage = "started";
@@ -1274,21 +1355,20 @@ export class GameServer {
       lobbyCreatedAt: this.createdAt,
       visibleAt: this.visibleAt,
       config,
-      players: this.clients
-        .players()
-        .filter((c) => this.gameConfig.crewMode !== "viewer-bots" || c.botSpawn)
-        .map((c) => ({
-          username: c.username,
-          clanTag: c.clanTag ?? null,
-          clientID: c.clientID,
-          cosmetics: c.cosmetics,
-          twitch: c.twitch,
-          botSpawn:
-            this.gameConfig.crewMode === "viewer-bots" ? c.botSpawn : undefined,
-          isLobbyCreator: this.lobbyCreatorID === c.clientID,
-          friends: friendsFor(c),
-          teamIndex: this.matchmakingTeamIndex(c),
-        })),
+      players: this.crewStartingPlayers().map((c) => ({
+        username: c.username,
+        clanTag: c.clanTag ?? null,
+        clientID: c.clientID,
+        cosmetics: c.cosmetics,
+        twitch: c.twitch,
+        botSpawn:
+          this.gameConfig.crewMode === "viewer-bots" ? c.botSpawn : undefined,
+        initialSpawn:
+          this.gameConfig.crewMode === "active" ? c.botSpawn : undefined,
+        isLobbyCreator: this.lobbyCreatorID === c.clientID,
+        friends: friendsFor(c),
+        teamIndex: this.matchmakingTeamIndex(c),
+      })),
       tribes: this.tribes,
     });
     if (!result.success) {
@@ -1498,6 +1578,7 @@ export class GameServer {
   // (update_game_config replaces it), so someone admitted before it was set is
   // not proof they may hold a seat now.
   private setSpectator(client: Client, spectator: boolean): void {
+    if (this.crewLockedPlayers !== null) return;
     if (client.spectator === spectator) return;
     if (!spectator) {
       if (this.stage === "started" || this.ended) return;
@@ -1604,7 +1685,7 @@ export class GameServer {
             lobbyCreatedAt: this.createdAt,
             isLobbyHost: this.lobbyCreatorID === client.clientID,
             myClientID:
-              this.gameConfig.crewMode === "viewer-bots"
+              this.gameConfig.crewMode === "viewer-bots" || client.spectator
                 ? undefined
                 : client.clientID,
             // Repeated here for the late joiner, who connects after the

@@ -36,7 +36,14 @@ export async function verifyClientToken(
         return { type: "error", message: "Twitch sign-in required" };
       const body = await response.json();
       const claims = TokenPayloadSchema.parse(body.claims);
-      if (claims.provider !== "twitch")
+      if (
+        claims.provider !== "twitch" &&
+        !(
+          claims.provider === "crew-observer" &&
+          claims.role === "crew-observer" &&
+          claims.observerGameID
+        )
+      )
         return { type: "error", message: "Twitch sign-in required" };
       return { type: "success", persistentId: claims.sub, claims };
     } catch {

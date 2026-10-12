@@ -577,6 +577,10 @@ function mountWebGLFrameLoop(
       if (width > 0 && height > 0) {
         cachedCanvasW = width;
         cachedCanvasH = height;
+        if (new URLSearchParams(window.location.search).has("obs")) {
+          transformHandler.updateCanvasBoundingRect();
+          transformHandler.centerAll(0.8);
+        }
       }
     }
   });
@@ -868,6 +872,19 @@ async function createClientGame(
       view,
       mapLayerController,
     );
+    if (new URLSearchParams(window.location.search).has("obs")) {
+      gameRenderer.transformHandler.centerAll(0.8);
+      const { Howler } = await import("howler");
+      Howler.mute(true);
+      const style = document.createElement("style");
+      style.textContent =
+        "desktop-nav-bar,mobile-nav-bar,game-left-sidebar,control-panel,game-right-sidebar button,game-right-sidebar a,#game-input-overlay{pointer-events:none!important} desktop-nav-bar,mobile-nav-bar,control-panel,game-left-sidebar,game-right-sidebar button,game-right-sidebar a{display:none!important} body{cursor:none!important}";
+      document.head.appendChild(style);
+      window.parent.postMessage(
+        { type: "crew-match-ready", gameID: lobbyConfig.gameID },
+        window.location.origin,
+      );
+    }
 
     const metrics = new GameMetrics(lobbyConfig.gameID, clientID);
     const { builder: webglBuilder, stopFrameLoop } = mountWebGLFrameLoop(
