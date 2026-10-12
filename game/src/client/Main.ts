@@ -1381,7 +1381,16 @@ class Client {
       const returningAsHost = new URLSearchParams(window.location.search).has(
         "host",
       );
-      if (returningAsHost) {
+      const crewAdmission =
+        process.env.CREW_TWITCH_ONLY === "true" ? await userAuth(true) : null;
+      const crewHost =
+        crewAdmission !== null &&
+        crewAdmission !== false &&
+        crewAdmission.claims.role === "crew-host";
+      if (
+        returningAsHost &&
+        (crewHost || process.env.CREW_TWITCH_ONLY !== "true")
+      ) {
         // open() reveals the inline page itself (it calls showPage internally).
         // Calling showPage first would open the modal once with no args and
         // spuriously create a lobby before this attach call runs.
@@ -1659,6 +1668,22 @@ class Client {
       return;
     }
     const playerRole = auth !== false ? (auth.claims.role ?? null) : null;
+    if (
+      process.env.CREW_TWITCH_ONLY === "true" &&
+      playerRole === "crew-host" &&
+      lobby.source === "private" &&
+      !lobby.spectator &&
+      !lobby.gameStartInfo &&
+      !lobby.gameRecord
+    ) {
+      // Code entry and canonical invitation links must restore the host view.
+      // The server still verifies ownership on configuration/start requests.
+      this.joinInFlight = false;
+      await loadModal("host-lobby-modal");
+      this.loadedJoinModal()?.closeWithoutLeaving();
+      this.hostModal.open({ existingLobbyId: lobby.gameID });
+      return;
+    }
     // Ensure the one-shot Steam name-seed has settled before reading
     // getUsername(), mirroring how getClanCheck() runs in parallel with the
     // handshake. whenSeeded() always resolves (falling back to the generated

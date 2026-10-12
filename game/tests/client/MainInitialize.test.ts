@@ -694,6 +694,51 @@ describe("Client.initialize() booted from Main.ts module scope", () => {
     }
   });
 
+  it("restores host controls for Crew room-code entry while viewers remain joiners", async () => {
+    await loadModal("host-lobby-modal");
+    const hostModal = document.querySelector("host-lobby-modal") as unknown as {
+      open: (args: { existingLobbyId: string }) => void;
+    };
+    const open = vi.spyOn(hostModal, "open").mockImplementation(() => {});
+    const previousAuth = mocks.userAuth.getMockImplementation();
+    mocks.joinLobby.mockClear();
+    vi.stubEnv("CREW_TWITCH_ONLY", "true");
+    try {
+      mocks.userAuth.mockResolvedValue({
+        token: "host-fixture",
+        claims: { role: "crew-host" },
+      });
+      document.dispatchEvent(
+        new CustomEvent("join-lobby", {
+          detail: { gameID: "CdEf1234", source: "private" },
+          bubbles: true,
+        }),
+      );
+      await vi.waitFor(() =>
+        expect(open).toHaveBeenCalledWith({ existingLobbyId: "CdEf1234" }),
+      );
+      expect(mocks.joinLobby).not.toHaveBeenCalled();
+      open.mockClear();
+      mocks.userAuth.mockResolvedValue({
+        token: "viewer-fixture",
+        claims: { role: "crew-viewer" },
+      });
+      document.dispatchEvent(
+        new CustomEvent("join-lobby", {
+          detail: { gameID: "EfGh1234", source: "private" },
+          bubbles: true,
+        }),
+      );
+      await vi.waitFor(() => expect(mocks.joinLobby).toHaveBeenCalledTimes(1));
+      expect(open).not.toHaveBeenCalled();
+      expect(mocks.joinLobby.mock.calls[0][1].playerRole).toBe("crew-viewer");
+    } finally {
+      open.mockRestore();
+      if (previousAuth) mocks.userAuth.mockImplementation(previousAuth);
+      vi.unstubAllEnvs();
+    }
+  });
+
   // Last: the viewer replaces the menu, and any later hash change would
   // then leave the page.
   it("opens the replay viewer when the hash changes to one, though closing the join modal resets the URL", async () => {

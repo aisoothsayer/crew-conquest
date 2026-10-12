@@ -62,6 +62,7 @@ describe("HostLobbyModal Steam invite button", () => {
 
     expect(header.querySelector(INVITE)).toBeNull();
     expect(header.querySelector(COPY)).not.toBeNull();
+    expect(customElements.get("copy-button")).toBeDefined();
   });
 
   // createLobby() assigns lobbyId asynchronously and this modal renders before

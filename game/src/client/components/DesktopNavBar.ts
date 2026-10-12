@@ -55,9 +55,7 @@ export class DesktopNavBar extends LitElement {
       return html`<nav
         class="hidden lg:flex w-full bg-zinc-900/90 items-center justify-center gap-8 py-4"
       >
-        <a href="/crew.html" class="text-white font-bold"
-          >${translateText("crew.title")}</a
-        >
+        <a href="/crew.html" class="text-white font-bold">Crew home</a>
         <button class="nav-menu-item text-malibu-blue" data-page="page-play">
           ${translateText("main.play")}
         </button>

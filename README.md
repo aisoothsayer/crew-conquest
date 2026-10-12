@@ -2,7 +2,7 @@
 
 A Twitch-connected strategy game for AI Soothsayer's crew, adapted from OpenFront. Danny hosts; Twitch viewers join with their names and profile pictures. Modes include host-placed solo bots, viewer-placed autonomous factions, and active multiplayer.
 
-This is release candidate `CREW-20261012-10`. The game remains a local beta until its Linux build, public hosting and remote Twitch sign-in tests pass.
+This is public beta `CREW-20261012-11`, hosted at https://danny-crew-conquest.onrender.com/crew.html. Danny hosts; signed-in viewers join. Free-host capacity remains limited and unproven for a full audience.
 
 ## Source layout
 
@@ -18,4 +18,4 @@ The container builds the client and corresponding source download. Generated ass
 
 Retain [game LICENSE](game/LICENSE), [asset license](game/LICENSE-ASSETS), [credits](game/CREDITS.md), [licensing details](game/LICENSING.md), [Crew asset notice](game/resources/CREW-ASSETS.md) and [third-party notices](game/resources/public/crew-notices.txt). Original proprietary assets are excluded. The original upstream project is [OpenFront](https://github.com/openfrontio/OpenFrontIO).
 
-Public hosting capacity, Linux/container execution and multi-device verification remain pending. No paid plan or reward/wallet integration is enabled by this source.
+Linux/container deployment and a two-account Twitch rehearsal have passed. Full audience capacity and durable server replay storage remain pending. No paid plan or reward/wallet integration is enabled by this source.

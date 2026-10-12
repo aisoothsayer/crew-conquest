@@ -3,6 +3,7 @@ import { html, LitElement, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import qrcode from "qrcode-generator";
 import { ClientEnv } from "../ClientEnv";
+import "./CopyButton";
 
 @customElement("crew-invite")
 export class CrewInvite extends LitElement {

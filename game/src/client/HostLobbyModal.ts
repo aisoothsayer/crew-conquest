@@ -32,6 +32,7 @@ import { createLobby, getUserMe, queueLobby, setLobbyListed } from "./Api";
 import "./components/baseComponents/Modal";
 import { BaseModal } from "./components/BaseModal";
 import "./components/ConfirmDialog";
+import "./components/CopyButton";
 import { CopyButton } from "./components/CopyButton";
 import "./components/CrewInvite";
 import "./components/CrewMapPlacement";
@@ -1039,10 +1040,12 @@ export class HostLobbyModal extends BaseModal {
     const existingLobbyId =
       typeof args?.existingLobbyId === "string" ? args.existingLobbyId : null;
     if (existingLobbyId !== null) {
-      this.attachToExistingLobby(existingLobbyId).catch(() => {
-        // Clear clipboard so the host doesn't accidentally share a dead link,
-        // matching the createLobby() failure path below.
-        void navigator.clipboard.writeText("").catch(() => {});
+      this.attachToExistingLobby(existingLobbyId).catch((error) => {
+        console.error("Could not reopen host lobby", error);
+        showToast(
+          "Could not reopen this room. Return to Crew home and create a new room.",
+          "red",
+        );
       });
       this.loadNationCount();
       return;
@@ -1065,7 +1068,7 @@ export class HostLobbyModal extends BaseModal {
         const url = await this.constructUrl();
         this.updateLobbyHistory(url);
         await this.updateComplete;
-        void (this.querySelector("copy-button") as CopyButton)?.handleCopy();
+        this.copyInvitation();
         return creatorToken;
       })
       .then((creatorToken) => {
@@ -1103,7 +1106,7 @@ export class HostLobbyModal extends BaseModal {
     const url = await this.constructUrl();
     this.updateLobbyHistory(url);
     await this.updateComplete;
-    void (this.querySelector("copy-button") as CopyButton)?.handleCopy();
+    this.copyInvitation();
 
     this.dispatchEvent(
       new CustomEvent("join-lobby", {
@@ -1115,6 +1118,14 @@ export class HostLobbyModal extends BaseModal {
         composed: true,
       }),
     );
+  }
+
+  private copyInvitation() {
+    // Optional clipboard convenience must never prevent authenticated admission.
+    const button = this.querySelector("copy-button") as CopyButton | null;
+    if (typeof button?.handleCopy === "function") {
+      void button.handleCopy().catch(() => {});
+    }
   }
 
   private leaveLobby() {

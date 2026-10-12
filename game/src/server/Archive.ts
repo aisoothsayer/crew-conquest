@@ -13,6 +13,14 @@ import { ServerEnv } from "./ServerEnv";
 const log = logger.child({ component: "Archive" });
 
 export async function archive(gameRecord: GameRecord) {
+  if (process.env.CREW_TWITCH_ONLY === "true") {
+    // Standalone Crew has no upstream archive account. Keep match records
+    // inside this installation rather than posting them to OpenFront's API.
+    log.info("Standalone Crew archive storage is not configured", {
+      gameID: gameRecord.info.gameID,
+    });
+    return;
+  }
   try {
     const parsed = GameRecordSchema.safeParse(gameRecord);
     if (!parsed.success) {
@@ -47,6 +55,7 @@ export async function archive(gameRecord: GameRecord) {
 export async function readGameRecord(
   gameId: GameID,
 ): Promise<GameRecord | null> {
+  if (process.env.CREW_TWITCH_ONLY === "true") return null;
   try {
     if (!ID.safeParse(gameId).success) {
       log.error(`invalid game ID: ${gameId}`);

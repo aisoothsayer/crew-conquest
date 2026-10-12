@@ -69,9 +69,7 @@ export class MobileNavBar extends LitElement {
 
     if (process.env.CREW_TWITCH_ONLY === "true") {
       return html`<div class="flex flex-col gap-6 p-5">
-        <a href="/crew.html" class="text-white font-bold"
-          >${translateText("crew.title")}</a
-        >
+        <a href="/crew.html" class="text-white font-bold">Crew home</a>
         <button class=${MOBILE_ITEM} data-page="page-play">
           ${translateText("main.play")}
         </button>

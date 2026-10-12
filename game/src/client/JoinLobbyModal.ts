@@ -28,12 +28,12 @@ import { PublicLobbySocket } from "./LobbySocket";
 import { JoinLobbyEvent } from "./Main";
 import { ensureServerList, redirectToGameVersion } from "./ServerList";
 import { terrainMapFileLoader } from "./TerrainMapFileLoader";
+import { UserSettings } from "./UserSettings";
 import { normaliseMapKey } from "./Utils";
 import { findVersionedShell } from "./VersionedReplay";
 import { BaseModal } from "./components/BaseModal";
 import "./components/CopyButton";
 import "./components/CrewInvite";
-import { UserSettings } from "./UserSettings";
 import "./components/CrewMapPlacement";
 import type { CrewPlacement } from "./components/CrewMapPlacement";
 import { GameStartAlertController } from "./components/GameStartAlertController";
@@ -236,6 +236,13 @@ export class JoinLobbyModal extends BaseModal {
       : "";
     return html`
       <div class="flex flex-col h-full">
+        ${process.env.CREW_TWITCH_ONLY === "true"
+          ? html`<a
+              href="/crew.html"
+              class="block px-6 py-3 text-cyan-200 underline"
+              >Back to Crew home</a
+            >`
+          : nothing}
         <div class="flex-1 custom-scrollbar p-6 space-y-4 mr-1">
           ${this.isConnecting
             ? html`
