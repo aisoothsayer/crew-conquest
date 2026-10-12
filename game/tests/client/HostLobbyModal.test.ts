@@ -1,3 +1,14 @@
+import {
+  Difficulty,
+  GameMapSize,
+  GameMapType,
+  GameMode,
+  UnitType,
+} from "@openfront/engine-api/game/GameTypes";
+import type {
+  GameConfig,
+  GameConfigPatch,
+} from "@openfront/engine-api/Schemas";
 import { render } from "lit";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -91,5 +102,66 @@ describe("HostLobbyModal Steam invite button", () => {
     button?.click();
 
     expect(presenceMocks.openInviteDialog).toHaveBeenCalledOnce();
+  });
+
+  it("preserves a returning room's customization when the host edits one setting", async () => {
+    const modal = hostModal();
+    const editable = modal as unknown as {
+      restoreExistingConfig: (config: GameConfig) => void;
+      loadNationCount: () => Promise<void>;
+      constructUrl: () => Promise<string>;
+      putGameConfig: () => Promise<void>;
+      defaultNationCount: number;
+      nations: number;
+      bots: number;
+    };
+    vi.spyOn(editable, "loadNationCount").mockImplementation(async () => {
+      editable.defaultNationCount = 49;
+    });
+    vi.spyOn(editable, "constructUrl").mockResolvedValue(window.location.href);
+    const updates: GameConfigPatch[] = [];
+    modal.addEventListener("update-game-config", (event) =>
+      updates.push((event as CustomEvent).detail.config),
+    );
+    editable.restoreExistingConfig({
+      gameMap: GameMapType.UnitedStates,
+      gameMapSize: GameMapSize.Normal,
+      difficulty: Difficulty.Hard,
+      gameMode: GameMode.FFA,
+      bots: 40,
+      nations: 5,
+      infiniteGold: false,
+      infiniteTroops: false,
+      donateGold: true,
+      donateTroops: true,
+      instantBuild: false,
+      randomSpawn: false,
+      maxTimerValue: 1,
+      startingGold: 4_000_000,
+      goldMultiplier: 3,
+      spawnImmunityDuration: 600,
+      disabledUnits: [UnitType.AtomBomb],
+      customAllianceDuration: 0,
+      startDelay: 7,
+    } as GameConfig);
+    await vi.waitFor(() => expect(editable.nations).toBe(5));
+    editable.bots = 99;
+    await editable.putGameConfig();
+    expect(updates.at(-1)).toMatchObject({
+      gameMap: GameMapType.UnitedStates,
+      bots: 99,
+      nations: 5,
+      difficulty: Difficulty.Hard,
+      maxTimerValue: 1,
+      startingGold: 4_000_000,
+      goldMultiplier: 3,
+      spawnImmunityDuration: 600,
+      disabledUnits: [UnitType.AtomBomb],
+      customAllianceDuration: 0,
+      startDelay: 7,
+      infiniteGold: false,
+      infiniteTroops: false,
+      donateGold: true,
+    });
   });
 });

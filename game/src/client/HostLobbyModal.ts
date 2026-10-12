@@ -6,6 +6,7 @@ import {
   UnitType,
 } from "@openfront/engine-api/game/GameTypes";
 import {
+  GameConfig,
   GameConfigPatch,
   isValidGameID,
   TeamCountConfig,
@@ -58,6 +59,7 @@ import {
   getNationsForCompactMap,
   getRandomMapType,
   getUpdatedDisabledUnits,
+  nationsConfigToSlider,
   parseBoundedFloatFromInput,
   parseBoundedIntegerFromInput,
   preventDisallowedKeys,
@@ -164,6 +166,7 @@ export class HostLobbyModal extends BaseModal {
   // or edited by the host before that arrived. Either way later broadcasts
   // don't snap the field back.
   private playerLimitLoadedFor: string | null = null;
+  private restoreConfigOnArrival = false;
 
   private readonly handleLobbyInfo = (event: LobbyInfoEvent) => {
     const lobby = event.lobby;
@@ -173,6 +176,10 @@ export class HostLobbyModal extends BaseModal {
     this.crewClientID = event.myClientID;
     this.crewMode = lobby.gameConfig?.crewMode ?? "active";
     this.crewPlacementOpen = lobby.gameConfig?.crewPlacementOpen ?? false;
+    if (this.restoreConfigOnArrival && lobby.gameConfig) {
+      this.restoreConfigOnArrival = false;
+      this.restoreExistingConfig(lobby.gameConfig);
+    }
     // A host returning to an existing lobby (?host) starts with default
     // settings; without this, their next change of any setting would send
     // maxPlayers: null and clear the lobby's cap. Only a cap the server
@@ -1040,6 +1047,7 @@ export class HostLobbyModal extends BaseModal {
     const existingLobbyId =
       typeof args?.existingLobbyId === "string" ? args.existingLobbyId : null;
     if (existingLobbyId !== null) {
+      this.restoreConfigOnArrival = true;
       this.attachToExistingLobby(existingLobbyId).catch((error) => {
         console.error("Could not reopen host lobby", error);
         showToast(
@@ -1118,6 +1126,65 @@ export class HostLobbyModal extends BaseModal {
         composed: true,
       }),
     );
+  }
+
+  private restoreExistingConfig(config: GameConfig) {
+    this.selectedMap = config.gameMap;
+    this.compactMap = config.gameMapSize === GameMapSize.Compact;
+    this.selectedDifficulty = config.difficulty;
+    this.bots = config.bots;
+    this.gameMode = config.gameMode;
+    this.teamCount = config.playerTeams ?? 2;
+    this.infiniteGold = config.infiniteGold;
+    this.infiniteTroops = config.infiniteTroops;
+    this.donateGold = config.donateGold;
+    this.donateTroops = config.donateTroops;
+    this.instantBuild = config.instantBuild;
+    this.randomSpawn = config.randomSpawn;
+    this.disabledUnits = config.disabledUnits ?? [];
+    this.maxTimer = config.maxTimerValue != null;
+    this.maxTimerValue = config.maxTimerValue ?? undefined;
+    this.startDelayValue = config.startDelay ?? 3;
+    this.spawnImmunity = (config.spawnImmunityDuration ?? 0) > 0;
+    this.spawnImmunityDurationMinutes =
+      config.spawnImmunityDuration == null
+        ? undefined
+        : config.spawnImmunityDuration / 600;
+    this.goldMultiplier = config.goldMultiplier != null;
+    this.goldMultiplierValue = config.goldMultiplier ?? undefined;
+    this.startingGold = config.startingGold != null;
+    this.startingGoldValue =
+      config.startingGold == null ? undefined : config.startingGold / 1_000_000;
+    this.customAlliances = config.customAllianceDuration != null;
+    this.customAllianceMinutes = config.customAllianceDuration ?? undefined;
+    this.doomsdayClock = config.doomsdayClock?.enabled ?? false;
+    this.doomsdayClockSpeed = config.doomsdayClock?.speed ?? "normal";
+    this.overtime = config.overtime?.enabled ?? false;
+    this.overtimeStartMinutes = config.overtime?.startMinutes;
+    this.anonymizeNames = config.anonymizeNames ?? false;
+    this.nameReveals = config.nameReveals ?? [];
+    this.whitelistEnabled = (config.allowedPublicIds?.length ?? 0) > 0;
+    this.allowedPublicIds = config.allowedPublicIds?.join(", ") ?? "";
+    this.waterNukes = config.waterNukes ?? false;
+    this.hostCheatsEnabled = config.hostCheats !== undefined;
+    this.hostCheatInfiniteGold = config.hostCheats?.infiniteGold ?? false;
+    this.hostCheatInfiniteTroops = config.hostCheats?.infiniteTroops ?? false;
+    this.hostCheatGoldMultiplier = config.hostCheats?.goldMultiplier != null;
+    this.hostCheatGoldMultiplierValue =
+      config.hostCheats?.goldMultiplier ?? undefined;
+    this.hostCheatStartingGold = config.hostCheats?.startingGold != null;
+    this.hostCheatStartingGoldValue =
+      config.hostCheats?.startingGold == null
+        ? undefined
+        : config.hostCheats.startingGold / 1_000_000;
+    void this.loadNationCount().then(() => {
+      if (this.selectedMap === config.gameMap) {
+        this.nations = nationsConfigToSlider(
+          config.nations,
+          this.defaultNationCount,
+        );
+      }
+    });
   }
 
   private copyInvitation() {
