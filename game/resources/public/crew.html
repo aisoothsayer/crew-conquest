@@ -1,9 +1,53 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Crew Conquest · AI Soothsayer</title>
-<style>body{margin:0;background:radial-gradient(ellipse at top,#17434a,#07111f 65%);color:#eef8ff;font:18px system-ui;min-height:100vh}main{max-width:780px;margin:auto;padding:7vh 28px}h1{font-size:clamp(42px,8vw,76px);line-height:1.05;margin:18px 0}p{line-height:1.6;color:#c4d9df}.eyebrow{letter-spacing:.18em;font-size:13px;color:#76e2dd}.actions{display:flex;gap:12px;flex-wrap:wrap;margin:26px 0}a,button{display:inline-block;background:#65dfd4;color:#071b26;padding:14px 20px;border:0;border-radius:12px;font:inherit;font-weight:650;text-decoration:none;cursor:pointer}[hidden]{display:none!important}.note{padding:20px;border:1px solid #31535a;border-radius:16px;background:#0b1c2a99}.modes{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:16px;margin-top:28px}.modes h2{font-size:19px;margin:0}.modes p{font-size:16px;margin:10px 0 0}footer{margin-top:32px;font-size:13px;color:#97aeb9}footer a{background:none;padding:0;color:#8fe8e0}.channel{background:none;color:#8fe8e0;padding:0}</style></head>
-<body><main><p class="eyebrow">AI SOOTHSAYER · THE CREW TAKES OVER</p><h1>Crew Conquest</h1><p>Claim your corner of the map. Build your empire, make an alliance—and decide how long it lasts.</p><p id="status" role="status">Checking sign-in…</p><div class="actions"><a id="login" href="/auth/login">Sign in with Twitch</a><a id="play" href="/" hidden>Open game</a><button id="logout" hidden>Sign out</button></div><p id="host" class="note" hidden>You’re the host. Create a room and share its link or QR. Solo lets you practice or watch up to 100 bots compete.</p><div class="modes"><section class="note"><h2>Play with the crew</h2><p>Join Danny’s room with your Twitch name and build, trade and fight for the map.</p></section><section class="note"><h2>Pick a bot. Watch the chaos.</h2><p>Choose your starting point. Your bot takes it from there while everyone watches.</p></section><section class="note"><h2>Danny’s simulation lab</h2><p>Place a few rivals or fill the map with 100. Same rules, a different story each round.</p></section></div><p>Follow the action on <a class="channel" href="https://www.twitch.tv/aisoothsayer">AI Soothsayer’s Twitch channel</a>.</p><footer>Based on <a href="https://github.com/openfrontio/OpenFrontIO">OpenFront</a>. © OpenFront and Contributors. Code licensed under AGPL-3.0. <a href="/crew-source.zip">Modified game source</a>. Existing asset notices retained. No BooBucks are spent or awarded.</footer></main>
+<style>
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at top,#17434a,#07111f 65%);color:#eef8ff;font:18px system-ui;min-height:100vh}main{max-width:880px;margin:auto;padding:6vh 24px}h1{font-size:clamp(42px,8vw,76px);line-height:1.05;margin:18px 0}p{line-height:1.6;color:#c4d9df}.eyebrow{letter-spacing:.18em;font-size:13px;color:#76e2dd}.actions{display:flex;gap:12px;flex-wrap:wrap;margin:20px 0}a,button{display:inline-block;background:#65dfd4;color:#071b26;padding:14px 20px;border:0;border-radius:12px;font:inherit;font-weight:650;text-decoration:none;cursor:pointer}[hidden]{display:none!important}.note{padding:22px;border:1px solid #31535a;border-radius:16px;background:#0b1c2acc}.modes{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px;margin:24px 0}.modes h2{font-size:23px;margin:0}.modes p{font-size:16px;margin:12px 0 18px}.secondary{background:#ffffff10;color:#c5f8f0;border:1px solid #31535a}.quiet{background:none;color:#8fe8e0;padding:0;font-size:15px}footer{margin-top:32px;font-size:13px;color:#97aeb9}footer a{background:none;padding:0;color:#8fe8e0;font-size:inherit}summary{cursor:pointer}#room{border-color:#65dfd488}#room-title{font-size:22px;margin:0}#logout{font-size:14px;padding:8px 14px}button:focus-visible,a:focus-visible,summary:focus-visible{outline:3px solid #fff;outline-offset:4px}
+</style></head>
+<body><main><p class="eyebrow">AI SOOTHSAYER · THE CREW TAKES OVER</p><h1>Crew Conquest</h1><p>Claim your corner. Build an empire. Make an alliance—and decide how long it lasts.</p>
+<p id="status" role="status">Checking Twitch sign-in…</p>
+<div class="actions"><a id="login" href="/auth/login?returnTo=%2Fcrew.html">Sign in with Twitch</a><button id="logout" class="secondary" hidden>Sign out</button></div>
+<section id="room" class="note"><h2 id="room-title">Checking Danny’s room…</h2><p id="room-help">The same link brings the whole crew together.</p><div class="actions"><a id="join" hidden>Join Danny’s room</a><a id="resume" class="secondary" hidden>Return to my room</a><a id="watch" class="secondary" href="/watch/current" target="_blank" rel="noopener" hidden>Watch the match</a><a id="return" class="quiet" hidden>Already playing? Return to your match</a></div></section>
+<div id="host" class="modes" hidden>
+<section class="note"><h2>Bot Free-for-All</h2><p>A clean map. Each viewer picks one starting point for their own bot. You press Start, entry closes, and everyone watches the bots fight for the win. No preset nations or tribes.</p><a href="/?crewAction=bots">Open Bot Free-for-All</a></section>
+<section class="note"><h2>Play Together</h2><p>You host a normal game. Viewers choose their starting points and play their own factions. You choose the settings and when to start—even without a second human.</p><a href="/?crewAction=active">Open Play Together</a></section>
+</div>
+<section class="note" style="margin-top:20px"><h2 style="margin:0;font-size:23px">Solo · USA</h2><p>Jump straight into a small USA practice round against a changing set of bots. Same game rules, no room setup. Solo stays private.</p><a id="solo" href="/auth/login?returnTo=%2F%3FcrewAction%3Dsolo">Play Solo</a></section>
+<p id="share" hidden>Invite your viewers with this page’s link, or use your room’s link and QR code. Only Danny can create and start hosted rooms.</p>
+<p><a class="quiet" href="https://www.twitch.tv/aisoothsayer">Watch AI Soothsayer on Twitch</a> · <a class="quiet" href="https://dannyisstuckonline.com/">Danny’s website</a></p>
+<footer><details><summary>Legal &amp; source</summary><p>© OpenFront and Contributors. Crew Conquest modifies OpenFront; code licensed under AGPL-3.0. No warranty. You may share and modify under that license. <a href="/crew-license.txt">License</a> · <a href="/crew-source.zip">Modified game source</a> · <a href="/crew-notices.txt">Copyright and asset notices</a>. No BooBucks are spent or awarded.</p></details></footer></main>
 <script>
-const status=document.getElementById('status');let csrf=null;
-fetch('/crew-api/session').then(async r=>{if(!r.ok){status.textContent='Sign in with Twitch, then open the game or Danny’s room invitation.';return;}const s=await r.json();csrf=s.csrf;status.textContent='Signed in as '+s.user.name+'. '+(s.user.canHost?'You create and start the crew’s rooms.':'Open Danny’s invitation to join his room.');document.getElementById('login').hidden=true;document.getElementById('play').hidden=false;document.getElementById('logout').hidden=false;document.getElementById('host').hidden=!s.user.canHost;}).catch(()=>{status.textContent='Sign-in service is unavailable. Try again shortly.';});
-document.getElementById('logout').onclick=async()=>{const r=await fetch('/crew-api/auth/logout',{method:'POST',headers:{'x-csrf-token':csrf}});if(r.ok)location.reload();else status.textContent='Sign-out could not be confirmed. Try again.';};
+'use strict';
+const el=id=>document.getElementById(id);
+let csrf=null, user=null, navigating=false;
+function roomPath(room){return room&&/^\/w\d+\/game\/[A-Za-z0-9]{8,10}$/.test(room.path)?room.path:null;}
+async function refreshRoom(){
+  try{
+    const r=await fetch('/crew-api/entry-current');if(!r.ok)throw new Error('Room check failed');
+    const room=await r.json(), path=roomPath(room);
+    for(const id of ['join','resume','watch','return'])el(id).hidden=true;
+    if(!path){el('room-title').textContent='No crew room open right now';el('room-help').textContent='Play Solo while Danny gets the next round ready.';return;}
+    const mode=room.mode==='viewer-bots'?'Bot Free-for-All':'Play Together';
+    el('room-title').textContent=mode+' · '+room.map;
+    if(user?.canHost){el('resume').href=path+(room.started?'?live':'?lobby&host');el('resume').hidden=false;}
+    if(room.canJoin){
+      el('room-help').textContent=room.players+' joined. Pick your land starting point; Danny starts the round.';
+      el('join').href=user?path+'?lobby':'/auth/login?returnTo=%2Fcrew.html';el('join').hidden=!!user?.canHost;
+      if(user&&!user.canHost&&!navigating){navigating=true;location.replace(path+'?lobby');}
+    }else{
+      el('room-help').textContent='Entry is closed for this round. Watch now or play Solo while you wait for the next room.';
+      el('watch').hidden=false;
+      if(user&&!user.canHost){el('return').href=path+'?live';el('return').hidden=false;}
+    }
+  }catch{el('room-title').textContent='Room status unavailable';el('room-help').textContent='Try refreshing shortly. The host may be waking up.';}
+}
+async function init(){
+  try{const r=await fetch('/crew-api/session');
+    if(r.ok){const s=await r.json();user=s.user;csrf=s.csrf;el('status').textContent='Signed in as '+user.name+'. '+(user.canHost?'You’re the host. Choose a mode below.':'You’ll go straight into Danny’s open room.');el('login').hidden=true;el('logout').hidden=false;el('host').hidden=!user.canHost;el('share').hidden=!user.canHost;el('solo').href='/?crewAction=solo';}
+    else if(r.status===401){el('status').textContent='Sign in with Twitch to join Danny’s open room or play Solo.';}
+    else throw new Error('Sign-in check failed');
+  }catch{el('status').textContent='Sign-in service is unavailable. Try refreshing shortly.';}
+  await refreshRoom();setInterval(refreshRoom,5000);
+}
+el('logout').onclick=async()=>{const r=await fetch('/crew-api/auth/logout',{method:'POST',headers:{'x-csrf-token':csrf}});if(r.ok)location.reload();else el('status').textContent='Sign-out could not be confirmed. Try again.';};
+void init();
 </script></body></html>

@@ -2040,7 +2040,7 @@ export async function queueLobby(
 // (blocked third-party cookies, some iframes) is minted a new identity on each
 // JWT refresh, and a refresh landing between create and join leaves the host
 // in their own lobby as someone who is not its creator.
-export async function createLobby(): Promise<{
+export async function createLobby(crewMode?: "active" | "viewer-bots"): Promise<{
   lobby: GameInfo;
   creatorToken: string;
 }> {
@@ -2074,7 +2074,7 @@ export async function createLobby(): Promise<{
   const token = await getPlayToken();
   try {
     const response = await fetch(
-      `${ClientEnv.serverHttpBase()}/api/create_game`,
+      `${ClientEnv.serverHttpBase()}/api/create_game${crewMode ? `?crewMode=${crewMode}` : ""}`,
       {
         method: "POST",
         headers: {

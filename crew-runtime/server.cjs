@@ -12,10 +12,18 @@ function createServer(config,deps){
     return matches.filter(Boolean).sort((a,b)=>b.createdAt-a.createdAt)[0]||null;
   }
   const server=http.createServer(async(req,res)=>{
+    async function currentRoom(){
+      if(deps?.currentRoom)return deps.currentRoom();
+      const rooms=await Promise.all(Array.from({length:Number(process.env.NUM_WORKERS||1)},async(_,i)=>{
+        try{const r=await fetch('http://127.0.0.1:'+(3001+i)+'/api/crew-entry/current',{headers:{'x-api-key':process.env.API_KEY||''},signal:AbortSignal.timeout(3000)});return r.ok?await r.json():null;}catch{return null;}
+      }));
+      return rooms.filter(Boolean).sort((a,b)=>b.createdAt-a.createdAt)[0]||null;
+    }
     res.setHeader('Cache-Control','no-store');res.setHeader('X-Content-Type-Options','nosniff');res.setHeader('Referrer-Policy','no-referrer');
     const json=(status,data)=>{res.writeHead(status,{'Content-Type':'application/json'});res.end(JSON.stringify(data));};
     try{
       const url=new URL(req.url,config.origin);
+      if(req.method==='GET'&&url.pathname==='/entry-current')return json(200,await currentRoom());
       if(req.method==='GET'&&url.pathname==='/observer-current')return json(200,await currentMatch());
       if(req.method==='GET'&&url.pathname==='/observer-session'){
         const match=await currentMatch();

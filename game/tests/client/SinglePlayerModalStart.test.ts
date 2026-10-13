@@ -1,8 +1,13 @@
-import { UnitType } from "@openfront/engine-api/game/GameTypes";
+import {
+  GameMapSize,
+  GameMapType,
+  UnitType,
+} from "@openfront/engine-api/game/GameTypes";
 import { describe, expect, it, vi } from "vitest";
 
 vi.mock("../../src/client/Cosmetics", () => ({
   getPlayerCosmetics: vi.fn(async () => ({})),
+  prewarmCosmetics: vi.fn(async () => {}),
 }));
 
 vi.mock("../../src/client/CrazyGamesSDK", () => ({
@@ -25,6 +30,28 @@ function createModal(): any {
 }
 
 describe("SinglePlayerModal start", () => {
+  it("quick Crew Solo dispatches an ordinary human USA game without setup or resource grants", async () => {
+    const modal = createModal();
+    modal.loadNationCount = async () => {
+      modal.defaultNationCount = 48;
+    };
+    const events: any[] = [];
+    modal.addEventListener("join-lobby", (e: Event) =>
+      events.push((e as CustomEvent).detail),
+    );
+    await modal.startCrewPractice();
+    expect(events).toHaveLength(1);
+    const info = events[0].gameStartInfo;
+    expect(info.players).toHaveLength(1);
+    expect(info.players[0].botSpawn).toBeUndefined();
+    expect(info.config.gameMap).toBe(GameMapType.UnitedStates);
+    expect(info.config.gameMapSize).toBe(GameMapSize.Compact);
+    expect(info.config.bots).toBe(48);
+    expect(info.config.nations).not.toBe("disabled");
+    expect(info.config.infiniteGold).toBe(false);
+    expect(info.config.infiniteTroops).toBe(false);
+    expect(info.config.startingGold).toBeUndefined();
+  });
   it("carries the selected team count and validated disabled units into the join-lobby config", async () => {
     const modal = createModal();
     const events: any[] = [];

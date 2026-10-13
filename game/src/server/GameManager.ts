@@ -42,6 +42,14 @@ export class GameManager {
     );
   }
 
+  public currentCrewRoom() {
+    for (const game of [...this.games.values()].reverse()) {
+      const entry = game.crewEntryInfo();
+      if (entry) return entry;
+    }
+    return null;
+  }
+
   public publicLobbies(): GameServer[] {
     return Array.from(this.games.values()).filter(
       (g) => g.phase() === GamePhase.Lobby && g.isPublic(),

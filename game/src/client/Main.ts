@@ -1417,6 +1417,32 @@ class Client {
       console.log(`${spectate ? "spectating" : "joining"} lobby ${lobbyId}`);
       return;
     }
+    if (process.env.CREW_TWITCH_ONLY === "true" && !decodedHash) {
+      const action = new URLSearchParams(window.location.search).get(
+        "crewAction",
+      );
+      if (action === "solo") {
+        whenModalLoaded("single-player-modal", () => {
+          void (
+            document.querySelector("single-player-modal") as SinglePlayerModal
+          )?.startCrewPractice();
+        });
+        return;
+      }
+      if (action === "bots" || action === "active") {
+        const admission = await userAuth(true);
+        if (admission !== false && admission.claims.role === "crew-host") {
+          whenModalLoaded("host-lobby-modal", () =>
+            this.hostModal.open({
+              crewMode: action === "bots" ? "viewer-bots" : "active",
+            }),
+          );
+          return;
+        }
+      }
+      window.location.replace("/crew.html");
+      return;
+    }
     if (modalRouter.routeFromHash()) {
       return;
     }

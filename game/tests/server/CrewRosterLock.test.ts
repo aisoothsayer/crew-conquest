@@ -34,6 +34,74 @@ function fixture() {
   viewer.botSpawn = { x: 170, y: 140 };
   return { game, host, viewer };
 }
+
+test("Danny starts alone after placing his point; entry closes immediately", () => {
+  const game = makeGame({
+    creatorPersistentID: "host",
+    config: { crewMode: "active" },
+  });
+  const host = makeClient({ persistentID: "host" });
+  game.joinClient(host);
+  expect(game.crewEntryInfo()?.canJoin).toBe(true);
+  host.botSpawn = { x: 300, y: 240 };
+  expect(
+    game.handleIntent(
+      { type: "toggle_game_start_timer" },
+      {
+        clientID: host.clientID,
+        isLobbyCreator: true,
+        isAdmin: false,
+        isAdminBot: false,
+      },
+    ).status,
+  ).toBe(200);
+  expect(game.crewEntryInfo()?.canJoin).toBe(false);
+  game.prestart();
+  game.start();
+  expect(game.hasStarted()).toBe(true);
+  const start = mockWsOf(host)
+    .sent()
+    .find((m) => m.type === "start") as any;
+  expect(start.gameStartInfo.players).toHaveLength(1);
+  expect(start.gameStartInfo.players[0].initialSpawn).toEqual(host.botSpawn);
+});
+
+test("Bot Free-for-All opens clean and can start with one selected bot, never unplaced factions", () => {
+  const game = makeGame({
+    creatorPersistentID: "host",
+    config: {
+      crewMode: "viewer-bots",
+      crewPlacementOpen: true,
+      bots: 400,
+      nations: "default",
+    },
+  });
+  const host = makeClient({ persistentID: "host" });
+  game.joinClient(host);
+  const actor = {
+    clientID: host.clientID,
+    isLobbyCreator: true,
+    isAdmin: false,
+    isAdminBot: false,
+  };
+  expect(game.gameInfo().gameConfig?.crewPlacementOpen).toBe(true);
+  expect(
+    game.handleIntent({ type: "toggle_game_start_timer" }, actor).status,
+  ).toBe(409);
+  host.botSpawn = { x: 300, y: 240 };
+  expect(
+    game.handleIntent({ type: "toggle_game_start_timer" }, actor).status,
+  ).toBe(200);
+  game.prestart();
+  game.start();
+  const start = mockWsOf(host)
+    .sent()
+    .find((m) => m.type === "start") as any;
+  expect(start.gameStartInfo.players).toHaveLength(1);
+  expect(start.gameStartInfo.config.bots).toBe(0);
+  expect(start.gameStartInfo.config.nations).toBe("disabled");
+  expect(start.myClientID).toBeUndefined();
+});
 test("Start locks new seats during countdown and live play, preserves reconnects and keeps humans human", () => {
   const { game, host, viewer } = fixture();
   const outcome = game.handleIntent(

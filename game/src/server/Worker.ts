@@ -1,3 +1,4 @@
+import { Difficulty, GameMapType } from "@openfront/engine-api/game/GameTypes";
 import {
   ID,
   isValidGameID,
@@ -91,6 +92,20 @@ export async function startWorker() {
     workerId,
   });
   const gm = new GameManager(log, telemetry, buildHash);
+  app.get("/api/crew-entry/current", (req, res) => {
+    if (
+      process.env.CREW_TWITCH_ONLY !== "true" ||
+      req.headers["x-api-key"] !== ServerEnv.apiKey()
+    ) {
+      res.status(403).json({ error: "Forbidden" });
+      return;
+    }
+    res.setHeader("Cache-Control", "no-store");
+    const room = gm.currentCrewRoom();
+    res.json(
+      room ? { ...room, path: `/w${workerId}/game/${room.gameID}` } : null,
+    );
+  });
   app.get("/api/crew-observer/current", (req, res) => {
     if (
       process.env.CREW_TWITCH_ONLY !== "true" ||
@@ -279,7 +294,32 @@ export async function startWorker() {
       return res.status(500).json({ error: "Could not allocate game id" });
     }
 
-    const game = gm.createGame(id, gc, creatorPersistentID);
+    const requestedCrewMode = req.query.crewMode;
+    if (
+      process.env.CREW_TWITCH_ONLY === "true" &&
+      requestedCrewMode !== undefined &&
+      requestedCrewMode !== "active" &&
+      requestedCrewMode !== "viewer-bots"
+    ) {
+      return res.status(400).json({ error: "Unknown Crew mode." });
+    }
+    const crewConfig =
+      process.env.CREW_TWITCH_ONLY === "true" && requestedCrewMode
+        ? {
+            ...gc,
+            gameMap: GameMapType.UnitedStates,
+            crewMode: requestedCrewMode as "active" | "viewer-bots",
+            ...(requestedCrewMode === "viewer-bots"
+              ? {
+                  bots: 0,
+                  nations: "disabled" as const,
+                  difficulty: Difficulty.Hard,
+                }
+              : {}),
+            crewPlacementOpen: true,
+          }
+        : gc;
+    const game = gm.createGame(id, crewConfig, creatorPersistentID);
     if (game === null) {
       log.warn(`cannot create game, id ${id} already exists`);
       return res.status(409).json({ error: "Game ID already exists" });

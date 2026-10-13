@@ -4,6 +4,8 @@ const {TwitchAuth,safeReturnTo}=require('./twitch-auth.cjs');
 const {inviteGate}=require('./invite-gate.cjs');
 test('return destinations only admit local game invitations',()=>{
  assert.equal(safeReturnTo('/w0/game/Abcd1234?lobby&s=hello'),'/w0/game/Abcd1234?lobby');
+ assert.equal(safeReturnTo('/?crewAction=solo'),'/?crewAction=solo');
+ assert.equal(safeReturnTo('/?crewAction=solo&returnTo=https://evil.example'),'/crew.html');
  for(const value of ['https://evil.example/game/Abcd1234','//evil.example/game/Abcd1234','/\\evil.example','/admin','/w0/game/Abcd1234?returnTo=https://evil.example','/w0/game/Abcd1234#secret','/w2/game/Abcd1234','/w0/game/too-short'])assert.equal(safeReturnTo(value),'/crew.html');
 });
 test('OAuth stores the destination in browser-bound state and ignores callback return tampering',async()=>{

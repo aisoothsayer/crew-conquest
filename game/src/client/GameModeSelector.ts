@@ -657,39 +657,26 @@ export class GameModeSelector extends LitElement {
   render() {
     if (process.env.CREW_TWITCH_ONLY === "true") {
       return html`<section class="flex flex-col gap-4 p-4">
-        <h2 class="text-2xl font-bold text-white">
-          ${translateText("crew.title")}
-        </h2>
-        <p class="text-white/70">${translateText("crew.match_help")}</p>
-        ${this.viewerSignedIn
-          ? html`<div class="grid gap-4 sm:grid-cols-3 h-14">
-              ${this.renderSmallActionCard(
-                translateText("main.solo"),
-                this.openSinglePlayerModal,
-                PRIMARY_ACTION,
-              )}
-              ${this.crewCanHost
-                ? this.renderSmallActionCard(
-                    translateText("main.create"),
-                    this.openHostLobby,
-                    SECONDARY_ACTION,
-                    undefined,
-                    true,
-                  )
-                : nothing}
-              ${this.renderSmallActionCard(
-                translateText("main.join"),
-                this.openJoinLobby,
-                SECONDARY_ACTION,
-                undefined,
-                true,
-              )}
-            </div>`
-          : html`<a
-              href="/auth/login"
-              class="bg-malibu-blue text-white p-4 rounded-lg text-center"
-              >${translateText("crew.sign_in")}</a
-            >`}
+        <h2 class="text-2xl font-bold text-white">Crew Conquest</h2>
+        <p>Join Danny’s room, or play a quick USA practice round.</p>
+        <div class="flex flex-wrap gap-4">
+          <a href="/crew.html" class="p-4 bg-malibu-blue rounded-lg"
+            >Crew home / Join Danny</a
+          >
+          <a href="/?crewAction=solo" class="p-4 bg-white/10 rounded-lg"
+            >Solo · USA</a
+          >
+          ${this.crewCanHost
+            ? html`
+                <a href="/?crewAction=bots" class="p-4 bg-white/10 rounded-lg"
+                  >Bot Free-for-All</a
+                >
+                <a href="/?crewAction=active" class="p-4 bg-white/10 rounded-lg"
+                  >Play Together</a
+                >
+              `
+            : nothing}
+        </div>
       </section>`;
     }
     const ffa = this.lobbies?.games?.["ffa"]?.[0];

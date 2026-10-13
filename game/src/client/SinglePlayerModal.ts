@@ -830,6 +830,23 @@ export class SinglePlayerModal extends BaseModal {
     await this.startGame();
   }
 
+  public async startCrewPractice(): Promise<void> {
+    void prewarmCosmetics();
+    this.crewBotSimulation = false;
+    this.crewManualBots = false;
+    this.resetOptions();
+    this.selectedMap = GameMapType.UnitedStates;
+    this.compactMap = true;
+    this.bots = 48;
+    await this.loadNationCount();
+    // A different small set of opponents; ordinary economy and rules.
+    this.nations = Math.min(
+      this.defaultNationCount,
+      8 + Math.floor(Math.random() * 9),
+    );
+    await this.startGame();
+  }
+
   // Reset all transient form state to ensure clean slate
   private selectCrewBotSimulation(enabled: boolean): void {
     if (enabled === this.crewBotSimulation) return;

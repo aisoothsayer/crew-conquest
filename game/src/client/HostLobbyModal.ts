@@ -463,8 +463,9 @@ export class HostLobbyModal extends BaseModal {
           : (
                 this.crewMode === "viewer-bots"
                   ? this.clients.filter((c) => c.botSpawn && !c.spectator)
-                      .length < 2
-                  : this.clients.length === 1
+                      .length < 1
+                  : process.env.CREW_TWITCH_ONLY !== "true" &&
+                    this.clients.length === 1
               )
             ? translateText(
                 this.crewMode === "viewer-bots"
@@ -762,8 +763,8 @@ export class HostLobbyModal extends BaseModal {
                       <p>
                         ${this.clients.filter((c) => c.botSpawn && !c.spectator)
                           .length}
-                        players ready. At least two players must place their
-                        starting points.
+                        players ready. You can start without a second human.
+                        Each player must choose a starting point first.
                       </p>`
                   : nothing}
                 ${this.crewMode === "viewer-bots"
@@ -1044,8 +1045,8 @@ export class HostLobbyModal extends BaseModal {
             (this.lobbyStartAt === null &&
               (this.crewMode === "viewer-bots"
                 ? this.clients.filter((c) => c.botSpawn && !c.spectator)
-                    .length < 2
-                : this.clients.filter((c) => !c.spectator).length < 2 ||
+                    .length < 1
+                : this.clients.filter((c) => !c.spectator).length < 1 ||
                   this.clients.some((c) => !c.spectator && !c.botSpawn)))}
             @click=${this.toggleGameStartTimer}
           ></o-button>
@@ -1146,7 +1147,21 @@ export class HostLobbyModal extends BaseModal {
     // resolves. clientID is assigned by the server when we join the lobby.
 
     // Pass auth token for creator identification (server extracts persistentID from it)
-    createLobby()
+    if (process.env.CREW_TWITCH_ONLY === "true") {
+      this.crewMode =
+        args?.crewMode === "viewer-bots" ? "viewer-bots" : "active";
+      this.selectedMap = GameMapType.UnitedStates;
+      this.crewPlacementOpen = true;
+      if (this.crewMode === "viewer-bots") {
+        this.bots = 0;
+        this.nations = 0;
+        this.selectedDifficulty = Difficulty.Hard;
+      }
+      this.restoreConfigOnArrival = true;
+    }
+    createLobby(
+      process.env.CREW_TWITCH_ONLY === "true" ? this.crewMode : undefined,
+    )
       .then(async ({ lobby, creatorToken }) => {
         this.lobbyId = lobby.gameID;
         if (!isValidGameID(this.lobbyId)) {
@@ -2080,7 +2095,7 @@ export class HostLobbyModal extends BaseModal {
     if (
       this.lobbyStartAt === null &&
       this.crewMode === "viewer-bots" &&
-      this.clients.filter((c) => c.botSpawn && !c.spectator).length < 2
+      this.clients.filter((c) => c.botSpawn && !c.spectator).length < 1
     ) {
       showToast(translateText("crew.need_two_bots"), "red");
       return;

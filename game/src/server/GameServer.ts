@@ -329,7 +329,7 @@ export class GameServer {
       this.gameConfig.randomSpawn = false;
       this.gameConfig.gameMode = GameMode.FFA;
       this.gameConfig.anonymizeNames = false;
-      this.gameConfig.crewPlacementOpen = false;
+      this.gameConfig.crewPlacementOpen ??= false;
     }
     this.creatorPersistentID = opts.creatorPersistentID;
     this.startsAt = opts.startsAt;
@@ -598,9 +598,12 @@ export class GameServer {
           !this.startsAt &&
           this.gameConfig.crewMode === "viewer-bots" &&
           this.clients.active().filter((c) => c.botSpawn && !c.spectator)
-            .length < 2
+            .length < 1
         ) {
-          return finish({ status: 409, error: "place at least two bots" });
+          return finish({
+            status: 409,
+            error: "Choose at least one starting point.",
+          });
         }
         this.gameConfig.crewPlacementOpen = false;
         if (this.startsAt) {
@@ -1156,7 +1159,7 @@ export class GameServer {
       return true;
     const players = this.crewStartingPlayers();
     return (
-      players.length >= 2 && players.every((c) => c.botSpawn !== undefined)
+      players.length >= 1 && players.every((c) => c.botSpawn !== undefined)
     );
   }
 
@@ -1170,6 +1173,20 @@ export class GameServer {
     };
   }
 
+  public crewEntryInfo() {
+    if (this.phase() === GamePhase.Finished) return null;
+    return {
+      ...this.observerInfo(),
+      canJoin:
+        this.stage === "lobby" &&
+        this.startsAt === undefined &&
+        this.playerCount() < (this.gameConfig.maxPlayers ?? Infinity),
+      mode: this.gameConfig.crewMode ?? "active",
+      players: this.playerCount(),
+      maxPlayers: this.gameConfig.maxPlayers ?? null,
+    };
+  }
+
   public prestart() {
     if (this.ended || this.hasStarted()) {
       return;
@@ -1177,7 +1194,7 @@ export class GameServer {
     if (!this.crewReadyToStart()) return;
     if (
       this.gameConfig.crewMode === "viewer-bots" &&
-      this.crewStartingPlayers().length < 2
+      this.crewStartingPlayers().length < 1
     )
       return;
     this.gameConfig.crewPlacementOpen = false;
@@ -1329,7 +1346,7 @@ export class GameServer {
     if (!this.crewReadyToStart()) return;
     if (
       this.gameConfig.crewMode === "viewer-bots" &&
-      this.crewStartingPlayers().length < 2
+      this.crewStartingPlayers().length < 1
     )
       return;
     this.stage = "started";

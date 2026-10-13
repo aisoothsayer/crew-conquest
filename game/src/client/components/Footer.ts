@@ -41,19 +41,23 @@ export class Footer extends LitElement {
           data-i18n="crew.channel_home"
           >${translateText("crew.channel_home")}</a
         >
-        <p>
-          © OpenFront and Contributors ·
-          <a
-            href="https://github.com/openfrontio/OpenFrontIO"
-            target="_blank"
-            rel="noopener noreferrer"
-            data-i18n="crew.source_credit"
-            >${translateText("crew.source_credit")}</a
-          >
-          · AGPL-3.0
-          · <a href="/crew-source.zip">Modified game source</a>
-          · <a href="/crew-notices.txt">Asset notices</a>
-        </p>
+        <details class="mt-2">
+          <summary class="cursor-pointer">Legal &amp; source</summary>
+          <p>
+            © OpenFront and Contributors ·
+            <a
+              href="https://github.com/openfrontio/OpenFrontIO"
+              target="_blank"
+              rel="noopener noreferrer"
+              data-i18n="crew.source_credit"
+              >${translateText("crew.source_credit")}</a
+            >
+            · AGPL-3.0 · <a href="/crew-source.zip">Modified game source</a> ·
+            <a href="/crew-notices.txt">Notices</a> ·
+            <a href="/crew-license.txt">License</a>
+            · No warranty. You may share and modify under AGPL-3.0.
+          </p>
+        </details>
         <lang-selector class="inline-block mt-2"></lang-selector>
       </footer>`;
     return html`
