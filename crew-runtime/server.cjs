@@ -39,7 +39,7 @@ function createServer(config,deps){
       }
       if(req.method==='GET'&&url.pathname==='/health')return json(200,{service:'openfront-crew-identity',authConfigured:auth.configured});
       if(req.method==='GET'&&url.pathname==='/auth/login'){const r=auth.begin(url.searchParams.get('returnTo'));res.writeHead(302,{Location:r.url,'Set-Cookie':r.cookie});return res.end();}
-      if(req.method==='GET'&&url.pathname==='/auth/callback'){const r=await auth.callback(req,url.searchParams);res.writeHead(303,{Location:r.returnTo, 'Set-Cookie':r.cookies});return res.end();}
+      if(req.method==='GET'&&url.pathname==='/auth/callback'){const r=await auth.callback(req,url.searchParams);const returnTo=r.returnTo==='/crew.html'?'/crew.html?entry=20261013':r.returnTo;res.writeHead(303,{Location:returnTo, 'Set-Cookie':r.cookies});return res.end();}
       if(req.method==='GET'&&url.pathname==='/session'){const {sid,session}=auth.session(req);await auth.validate(sid);return json(200,{user:session.user,csrf:session.csrf,expires:session.expires,token:auth.issue(sid)});}
       if(req.method==='GET'&&url.pathname==='/users/@me'){const r=auth.verifyTicket((req.headers.authorization||'').replace(/^Bearer /,''));await auth.validate(r.sid);return json(200,{user:r.sid===null?null:{twitch:{id:r.user.twitchId,login:r.user.login,displayName:r.user.name,avatar:r.user.avatar}},player:{publicId:r.subject,adfree:true,unlimitedRanked:false,canCreatePublicLobbies:false,username:r.user.name,usernameBase:r.user.name,flares:[],friends:[],achievements:{singleplayerMap:[]},subscription:null}});}
       if(req.method==='POST'&&url.pathname==='/game-ticket'){const {sid,session}=auth.session(req);auth.mutation(req,session);await auth.validate(sid);return json(200,{token:auth.issue(sid)});}

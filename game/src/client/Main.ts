@@ -1440,7 +1440,8 @@ class Client {
           return;
         }
       }
-      window.location.replace("/crew.html");
+      // Recover clients that cached the retired "Open game" entry for a year.
+      window.location.replace("/crew.html?entry=20261013");
       return;
     }
     if (modalRouter.routeFromHash()) {

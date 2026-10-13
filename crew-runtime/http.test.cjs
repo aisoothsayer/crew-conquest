@@ -11,3 +11,12 @@ test('HTTP rejects guests and forged game tickets',async()=>{const f=await runni
 test('HTTP authenticated identity issues a usable ticket and profile',async()=>{const f=await running();try{const s=await fetch(f.base+'/session',{headers:{cookie:f.cookie}}).then(r=>r.json());assert.equal(s.user.canHost,true);const r=await fetch(f.base+'/game-access',{headers:{authorization:'Bearer '+s.token}}).then(r=>r.json());assert.equal(r.claims.provider,'twitch');assert.equal(r.claims.role,'crew-host');const p=await fetch(f.base+'/users/@me',{headers:{authorization:'Bearer '+s.token}}).then(r=>r.json());assert.equal(p.user.twitch.id,'123');assert.equal(p.player.subscription,null);}finally{await f.stop();}});
 test('HTTP viewer hosting denied and cross-origin logout denied',async()=>{const f=await running('456');try{assert.equal((await fetch(f.base+'/host-access',{headers:{cookie:f.cookie}})).status,403);assert.equal((await fetch(f.base+'/auth/logout',{method:'POST',headers:{cookie:f.cookie,origin:'https://other.example','x-csrf-token':f.login.session.csrf}})).status,403);}finally{await f.stop();}});
 test('HTTP logout revokes the previously issued ticket',async()=>{const f=await running();try{const token=f.auth.issue(f.login.sid);assert.equal((await fetch(f.base+'/auth/logout',{method:'POST',headers:{cookie:f.cookie,origin:'http://localhost:9000','x-csrf-token':f.login.session.csrf}})).status,200);assert.equal((await fetch(f.base+'/game-access',{headers:{authorization:'Bearer '+token}})).status,401);}finally{await f.stop();}});
+
+test('browser OAuth returns to fresh Crew home without changing invitation or Solo destinations',async()=>{
+ const f=await running();
+ try{for(const [destination,expected] of [['/crew.html','/crew.html?entry=20261013'],['/w0/game/Abcd1234?lobby','/w0/game/Abcd1234?lobby'],['/?crewAction=solo','/?crewAction=solo']]){
+   const begin=f.auth.begin(destination),params=new URL(begin.url).searchParams;params.set('code','fixture-code');
+   const response=await fetch(f.base+'/auth/callback?'+params,{headers:{cookie:begin.cookie.split(';')[0]},redirect:'manual'});
+   assert.equal(response.status,303);assert.equal(response.headers.get('location'),expected);assert.equal(response.headers.get('cache-control'),'no-store');
+ }}finally{await f.stop();}
+});

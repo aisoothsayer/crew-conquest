@@ -2,7 +2,7 @@
 
 A Twitch-connected strategy game for AI Soothsayer's crew, adapted from OpenFront. Danny hosts; Twitch viewers join with their names and profile pictures. Modes include host-placed solo bots, viewer-placed autonomous factions, and active multiplayer.
 
-This is public beta `CREW-20261012-15`, hosted at https://danny-crew-conquest.onrender.com/crew.html. Danny hosts; signed-in viewers join. Free-host capacity remains limited and unproven for a full audience.
+This is public beta `CREW-20261013-16`, hosted at https://danny-crew-conquest.onrender.com/crew.html. Danny hosts; signed-in viewers join. Free-host capacity remains limited and unproven for a full audience.
 
 The permanent entry sends authenticated viewers directly into Danny's newest open room. Only Danny sees **Bot Free-for-All** and **Play Together** creation controls. When entry is locked or no room exists, viewers can launch quick USA Solo or watch a hosted round. Solo uses a compact USA map, a changing small set of AI rivals, and ordinary rules/economy; no setup form. Bot Free-for-All begins with no generated nations or tribes and open placement, then only placed Twitch factions compete autonomously. A second human is not required to create or start a room; at least one land point is still needed and every active human must be placed. Start closes entry; existing participants can reconnect. Required legal notices and corresponding source remain accessible through **Legal & source**.
 

@@ -13,6 +13,16 @@ export function getStaticAssetCacheControl(
 
   const normalizedPath = stripQueryString(urlPath);
   if (
+    [
+      "/crew.html",
+      "/crew-source.zip",
+      "/crew-notices.txt",
+      "/crew-license.txt",
+    ].includes(normalizedPath)
+  ) {
+    return "no-store";
+  }
+  if (
     normalizedPath.startsWith("/assets/") ||
     normalizedPath.startsWith("/_assets/")
   ) {

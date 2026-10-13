@@ -2,7 +2,7 @@
 
 Docker builds the frontend from extracted corresponding source and generates its source download inside the image. Git publication should include the extracted source/runtime/Dockerfile/.dockerignore, never the ZIPs, node_modules or compiled static directory. This Windows session has no Docker engine; Linux container execution must be verified by the separate host build. Local compiled-gateway tests are not a Linux-container certification.
 
-Build CREW-20261012-15. Package layout: `game/` contains corresponding modified source, resources and compiled static build; `crew-runtime/` contains the Twitch identity service and single-port gateway; root Dockerfile copies these into a Node24 container. No private configuration, OAuth token, secret, certificate, installed dependency tree or original proprietary asset is included.
+Build CREW-20261013-16. Package layout: `game/` contains corresponding modified source, resources and compiled static build; `crew-runtime/` contains the Twitch identity service and single-port gateway; root Dockerfile copies these into a Node24 container. No private configuration, OAuth token, secret, certificate, installed dependency tree or original proprietary asset is included.
 
 Public process: `node crew-runtime/start-hosted.cjs`. The hosting service exposes only `$PORT` (default10000). HTTP, lobby/game WebSockets and authentication use that same public HTTPS origin. Identity9120, master3000, worker3001 bind loopback. One worker is the beta default to reduce memory; this candidate supports at most two workers and is not a capacity certification.
 
@@ -18,7 +18,7 @@ Health endpoint `/health` checks master/lobby availability. Test public HTTPS, W
 
 The backend uses the standalone development cluster configuration (with explicit Twitch-only admission, a fresh internal API key, no stock lobby coordinator/registry) under production Node runtime and compiled assets. This isolates the fork from the original OpenFront API. It is a beta release candidate, not the upstream fleet infrastructure.
 
-Public source download: `/crew-source.zip` ships exact game/runtime source and asset notices for this candidate. Preserve LICENSE, LICENSE-ASSETS, CREDITS and Crew notices. CI/build source instructions: install Node24, `cd game`, `npm ci --ignore-scripts`, set `CREW_TWITCH_ONLY=true`, `CREW_BUILD_ID=CREW-20261012-15`, `GIT_COMMIT=<full 40-character source commit SHA>`, then `npm run build-prod`. Windows local launcher remains separately maintained in Danny HQ.
+Public source download: `/crew-source.zip` ships exact game/runtime source and asset notices for this candidate. Preserve LICENSE, LICENSE-ASSETS, CREDITS and Crew notices. CI/build source instructions: install Node24, `cd game`, `npm ci --ignore-scripts`, set `CREW_TWITCH_ONLY=true`, `CREW_BUILD_ID=CREW-20261013-16`, `GIT_COMMIT=<full 40-character source commit SHA>`, then `npm run build-prod`. Windows local launcher remains separately maintained in Danny HQ.
 
 No paid plan, subscription, domain purchase or wallet/reward integration is approved by this package. Website Guy owns the website link and host coordination. Namazu Guy owns this candidate's game/identity source. Public service creation/configuration remains a separate concrete step; no successful remote deployment is claimed by local tests.
 

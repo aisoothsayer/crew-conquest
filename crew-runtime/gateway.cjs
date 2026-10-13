@@ -25,7 +25,7 @@ function createGateway({workers=1,identityOrigin='http://127.0.0.1:9120'}={}){
   gate(req,res,()=>{
    const target=route(req.url,workers);if(!target){res.writeHead(404);return res.end('Room route unavailable.');}
    const headers={...req.headers,host:'127.0.0.1:'+target.port};delete headers['x-forwarded-for'];delete headers['x-forwarded-host'];
-   const proxy=http.request({hostname:'127.0.0.1',port:target.port,path:target.path,method:req.method,headers},r=>{res.writeHead(r.statusCode,r.headers);r.pipe(res);});
+   const proxy=http.request({hostname:'127.0.0.1',port:target.port,path:target.path,method:req.method,headers},r=>{const responseHeaders={...r.headers};if(String(responseHeaders['content-type']||'').startsWith('text/html'))responseHeaders['cache-control']='no-store';res.writeHead(r.statusCode,responseHeaders);r.pipe(res);});
    proxy.on('error',()=>{if(!res.headersSent)res.writeHead(502,{'Content-Type':'text/plain'});res.end('Crew Conquest is temporarily unavailable. Try again shortly.');});
    req.pipe(proxy);
   });
