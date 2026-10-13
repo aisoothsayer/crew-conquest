@@ -32,6 +32,30 @@ vi.mock("../../src/client/DesktopPresence", () => ({
 
 import { HostLobbyModal } from "../../src/client/HostLobbyModal";
 
+it("the rendered Crew Start button dispatches its action without leaking handler text", async () => {
+  vi.stubEnv("CREW_TWITCH_ONLY", "true");
+  const modal: any = new HostLobbyModal();
+  modal.crewMode = "viewer-bots";
+  modal.clients = [
+    { clientID: "host", username: "Danny", botSpawn: { x: 10, y: 10 } },
+  ];
+  modal.putGameConfig = vi.fn(async () => {});
+  const container = document.createElement("div");
+  try {
+    render(modal.renderBody(), container, { host: modal });
+    const start: any = container.querySelector('o-button[width="block"]');
+    await start.updateComplete;
+    expect(container.textContent).not.toContain("toggleGameStartTimer");
+    const event = vi.fn();
+    modal.addEventListener("toggle_game_start_timer", event);
+    start.click();
+    await vi.waitFor(() => expect(event).toHaveBeenCalledOnce());
+  } finally {
+    container.remove();
+    vi.unstubAllEnvs();
+  }
+});
+
 // The host holds the lobby code and decides who joins, so they are the player
 // most likely to want this — and they were the one surface the button missed
 // when it first shipped, because it lived inline in JoinLobbyModal. The

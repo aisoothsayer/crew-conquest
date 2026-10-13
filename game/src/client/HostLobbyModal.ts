@@ -880,10 +880,9 @@ export class HostLobbyModal extends BaseModal {
               ></crew-invite>`
             : nothing}
           <game-config-settings
-            ?inert=${this.lobbyStartAt !== null}
+            ?inert=${this.lobbyStartAt !== null || this.publiclyListed}
             style=${this.crewMode === "viewer-bots" ? "display:none" : ""}
             class="block ${this.publiclyListed ? "opacity-60" : ""}"
-            ?inert=${this.publiclyListed}
             .sectionGapClass=${"space-y-10"}
             .settings=${{
               map: {
