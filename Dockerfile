@@ -9,7 +9,7 @@ COPY crew-runtime ./crew-runtime
 COPY Dockerfile .dockerignore ./
 ARG RENDER_GIT_COMMIT
 ENV CREW_SOURCE_COMMIT=${RENDER_GIT_COMMIT}
-RUN test "${#RENDER_GIT_COMMIT}" = 40 && cd game && CREW_TWITCH_ONLY=true CREW_BUILD_ID=CREW-20261013-16 GIT_COMMIT="$RENDER_GIT_COMMIT" GAME_ENV=dev API_DOMAIN= npm run build-prod
+RUN test "${#RENDER_GIT_COMMIT}" = 40 && cd game && CREW_TWITCH_ONLY=true CREW_BUILD_ID=CREW-20261013-17 GIT_COMMIT="$RENDER_GIT_COMMIT" GAME_ENV=dev API_DOMAIN= npm run build-prod
 RUN zip -qr game/static/crew-source.zip game crew-runtime Dockerfile .dockerignore -x 'game/node_modules/*' 'game/static/*' 'game/.git/*' 'game/.env*' 'game/resources/public/crew-source.zip' 'game/proprietary/*'
 ENV NODE_ENV=production NUM_WORKERS=1 PORT=10000
 EXPOSE 10000

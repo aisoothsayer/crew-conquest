@@ -691,36 +691,18 @@ export class HostLobbyModal extends BaseModal {
                     ${translateText("crew.viewer_bot_mode")}
                   </button>
                 </div>
-                <p class="my-3">
-                  <a
-                    class="underline text-cyan-200"
-                    href="/watch/current"
-                    target="_blank"
-                    rel="noopener"
-                    >OBS match view</a
-                  >
-                  · Use this permanent URL as a 1920 × 1080 browser source.
-                  <button
-                    @click=${async () => {
-                      try {
-                        await navigator.clipboard.writeText(
-                          new URL("/watch/current", window.location.origin)
-                            .href,
-                        );
-                        showToast("OBS URL copied", "green");
-                      } catch {
-                        showToast(
-                          "Open the OBS match view and copy its address.",
-                          "red",
-                        );
-                      }
-                    }}
-                  >
-                    Copy OBS URL
-                  </button>
-                </p>
                 ${this.crewMode === "active"
                   ? html` <h3>Starting positions</h3>
+                      <p
+                        class="my-3 rounded-lg border border-white/30 bg-black/30 px-4 py-3 font-bold"
+                        role="status"
+                      >
+                        ${this.lobbyStartAt !== null
+                          ? "Starting points locked"
+                          : this.crewPlacementOpen
+                            ? "Placement open"
+                            : "Placement closed"}
+                      </p>
                       <p>
                         Everyone chooses a land starting point here. Start
                         closes entry and locks the positions. Existing players
@@ -755,6 +737,13 @@ export class HostLobbyModal extends BaseModal {
                         !this.clients.find(
                           (c) => c.clientID === this.crewClientID,
                         )?.spectator}
+                        .blockedReason=${this.lobbyStartAt !== null
+                          ? "Starting points are locked. You can still zoom and pan."
+                          : this.clients.find(
+                                (c) => c.clientID === this.crewClientID,
+                              )?.spectator
+                            ? "You’re watching this round. Turn on I play in this match to choose your own point. You can still zoom and pan."
+                            : ""}
                         @crew-place=${(e: CustomEvent) =>
                           this.eventBus?.emit(
                             new SendCrewBotPlaceEvent(e.detail),
@@ -834,8 +823,20 @@ export class HostLobbyModal extends BaseModal {
                           }}
                         />${translateText("game_settings.compact_map")}</label
                       >
+                      <p
+                        role="status"
+                        class="my-3 rounded-lg border border-white/30 bg-black/30 px-4 py-3 font-bold"
+                      >
+                        ${this.lobbyStartAt !== null
+                          ? "Starting points locked"
+                          : this.crewPlacementOpen
+                            ? "Placement open — viewers can choose their spots"
+                            : "Placement closed — open it to let viewers choose"}
+                      </p>
                       <button
-                        class="block my-3"
+                        class="block my-3 rounded-lg border-2 border-cyan-300 bg-cyan-950 px-5 py-3 font-bold text-white"
+                        aria-pressed=${this.crewPlacementOpen}
+                        ?disabled=${this.lobbyStartAt !== null}
                         @click=${() => {
                           this.crewPlacementOpen = !this.crewPlacementOpen;
                           void this.putGameConfig();

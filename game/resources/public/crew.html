@@ -12,6 +12,7 @@
 <section class="note"><h2>Play Together</h2><p>You host a normal game. Viewers choose their starting points and play their own factions. You choose the settings and when to start—even without a second human.</p><a href="/?crewAction=active">Open Play Together</a></section>
 </div>
 <section class="note" style="margin-top:20px"><h2 style="margin:0;font-size:23px">Solo · USA</h2><p>Jump straight into a small USA practice round against a changing set of bots. Same game rules, no room setup. Solo stays private.</p><a id="solo" href="/auth/login?returnTo=%2F%3FcrewAction%3Dsolo">Play Solo</a></section>
+<section id="owner-tools" class="note" style="margin-top:20px" hidden><details><summary>Host tools</summary><p>OBS follows your hosted matches. Use a 1920 × 1080 Browser source.</p><div class="actions"><a class="secondary" href="/watch/current" target="_blank" rel="noopener">Open OBS view</a><button id="copy-obs" class="secondary">Copy OBS URL</button></div><p id="obs-feedback" role="status"></p></details></section>
 <p id="share" hidden>Invite your viewers with this page’s link, or use your room’s link and QR code. Only Danny can create and start hosted rooms.</p>
 <p><a class="quiet" href="https://www.twitch.tv/aisoothsayer">Watch AI Soothsayer on Twitch</a> · <a class="quiet" href="https://dannyisstuckonline.com/">Danny’s website</a></p>
 <footer><details><summary>Legal &amp; source</summary><p>© OpenFront and Contributors. Crew Conquest modifies OpenFront; code licensed under AGPL-3.0. No warranty. You may share and modify under that license. <a href="/crew-license.txt">License</a> · <a href="/crew-source.zip">Modified game source</a> · <a href="/crew-notices.txt">Copyright and asset notices</a>. No BooBucks are spent or awarded.</p></details></footer></main>
@@ -42,12 +43,13 @@ async function refreshRoom(){
 }
 async function init(){
   try{const r=await fetch('/crew-api/session');
-    if(r.ok){const s=await r.json();user=s.user;csrf=s.csrf;el('status').textContent='Signed in as '+user.name+'. '+(user.canHost?'You’re the host. Choose a mode below.':'You’ll go straight into Danny’s open room.');el('login').hidden=true;el('logout').hidden=false;el('host').hidden=!user.canHost;el('share').hidden=!user.canHost;el('solo').href='/?crewAction=solo';}
+    if(r.ok){const s=await r.json();user=s.user;csrf=s.csrf;el('status').textContent='Signed in as '+user.name+'. '+(user.canHost?'You’re the host. Choose a mode below.':'You’ll go straight into Danny’s open room.');el('login').hidden=true;el('logout').hidden=false;el('host').hidden=!user.canHost;el('owner-tools').hidden=!user.canHost;el('share').hidden=!user.canHost;el('solo').href='/?crewAction=solo';}
     else if(r.status===401){el('status').textContent='Sign in with Twitch to join Danny’s open room or play Solo.';}
     else throw new Error('Sign-in check failed');
   }catch{el('status').textContent='Sign-in service is unavailable. Try refreshing shortly.';}
   await refreshRoom();setInterval(refreshRoom,5000);
 }
 el('logout').onclick=async()=>{const r=await fetch('/crew-api/auth/logout',{method:'POST',headers:{'x-csrf-token':csrf}});if(r.ok)location.reload();else el('status').textContent='Sign-out could not be confirmed. Try again.';};
+el('copy-obs').onclick=async()=>{if(!user?.canHost)return;try{await navigator.clipboard.writeText(new URL('/watch/current',location.origin).href);el('obs-feedback').textContent='OBS URL copied.';}catch{el('obs-feedback').textContent='Open OBS view and copy its address.';}};
 void init();
 </script></body></html>

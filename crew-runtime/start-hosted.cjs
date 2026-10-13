@@ -10,7 +10,7 @@ for(const name of ['CREW_TWITCH_CLIENT_ID','CREW_TWITCH_CLIENT_SECRET','CREW_HOS
 const workers=Number(process.env.NUM_WORKERS||1);if(!Number.isInteger(workers)||workers<1||workers>2)throw new Error('Crew candidate supports one or two workers.');
 const revision=process.env.CREW_SOURCE_COMMIT||process.env.RENDER_GIT_COMMIT;
 if(!/^[0-9a-f]{40}$/i.test(revision||''))throw new Error('Crew hosting requires the full source commit SHA.');
-const env={...process.env,CREW_TWITCH_ONLY:'true',NODE_ENV:'production',CREW_BUILD_ID:'CREW-20261013-16',GIT_COMMIT:revision,GAME_ENV:'dev',NUM_WORKERS:String(workers),INSTANCE_LETTER:'a',INSTANCE_ID:'crew-conquest',DOMAIN:origin.host,API_DOMAIN:'',API_KEY:randomBytes(32).toString('hex'),TURNSTILE_SITE_KEY:'1x00000000000000000000AA',LOBBY_COORDINATOR:'off'};
+const env={...process.env,CREW_TWITCH_ONLY:'true',NODE_ENV:'production',CREW_BUILD_ID:'CREW-20261013-17',GIT_COMMIT:revision,GAME_ENV:'dev',NUM_WORKERS:String(workers),INSTANCE_LETTER:'a',INSTANCE_ID:'crew-conquest',DOMAIN:origin.host,API_DOMAIN:'',API_KEY:randomBytes(32).toString('hex'),TURNSTILE_SITE_KEY:'1x00000000000000000000AA',LOBBY_COORDINATOR:'off'};
 delete env.GAME_HOST;delete env.SUBDOMAIN;delete env.GAME_DOMAIN;delete env.SITE_HOST;
 const children=[];let closing=false;
 function launch(args,cwd){const p=spawn(process.execPath,args,{cwd,env,stdio:'inherit',windowsHide:true});children.push(p);p.once('exit',stop);}

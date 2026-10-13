@@ -4,10 +4,10 @@ const html=fs.readFileSync(require('node:path').join(__dirname,'../game/resource
 const script=html.match(/<script>([\s\S]*?)<\/script>/)[1];
 async function page(user,room){
   const elements=Object.fromEntries([...html.matchAll(/id="([^"]+)"/g)].map(m=>[m[1],{hidden:/hidden/.test(html.match(new RegExp('<[^>]+id="'+m[1]+'"[^>]*>'))?.[0]||''),textContent:'',href:''}]));
-  const redirects=[];let nextRoom=room,periodic;
-  const ctx=vm.createContext({document:{getElementById:id=>elements[id]},location:{replace:url=>redirects.push(url),reload:()=>{}},setInterval:fn=>periodic=fn,fetch:async url=>url.endsWith('/session')?{ok:!!user,status:user?200:401,json:async()=>({user,csrf:'test'})}:{ok:true,json:async()=>nextRoom}});
+  const redirects=[],copies=[];let nextRoom=room,periodic;
+  const ctx=vm.createContext({URL,navigator:{clipboard:{writeText:async text=>copies.push(text)}},document:{getElementById:id=>elements[id]},location:{origin:'https://crew.test',replace:url=>redirects.push(url),reload:()=>{}},setInterval:fn=>periodic=fn,fetch:async url=>url.endsWith('/session')?{ok:!!user,status:user?200:401,json:async()=>({user,csrf:'test'})}:{ok:true,json:async()=>nextRoom}});
   vm.runInContext(script,ctx);await new Promise(setImmediate);
-  return {elements,redirects,poll:async room=>{nextRoom=room;await periodic();}};
+  return {elements,redirects,copies,poll:async room=>{nextRoom=room;await periodic();}};
 }
 const open={gameID:'Abcd1234',path:'/w0/game/Abcd1234',canJoin:true,mode:'viewer-bots',map:'United States',players:1};
 test('viewer authenticates once and enters current room without the creation menu; a closed round stays locked',async()=>{
@@ -25,4 +25,14 @@ test('entry discovery has no credential or account data',async()=>{
   await new Promise(resolve=>app.server.listen(0,'127.0.0.1',resolve));
   try{const r=await fetch('http://127.0.0.1:'+app.server.address().port+'/entry-current');assert.equal(r.status,200);assert.deepEqual(await r.json(),open);assert.equal(r.headers.get('cache-control'),'no-store');}
   finally{app.server.closeAllConnections();await new Promise(resolve=>app.server.close(resolve));}
+});
+test('OBS source copy tools appear only for the host and copy the permanent observer URL',async()=>{
+  const host=await page({name:'Danny',canHost:true},null);
+  assert.equal(host.elements['owner-tools'].hidden,false);
+  await host.elements['copy-obs'].onclick();assert.deepEqual(host.copies,['https://crew.test/watch/current']);
+  assert.match(host.elements['obs-feedback'].textContent,/copied/);
+  for(const user of [null,{name:'Viewer',canHost:false}]){
+    const p=await page(user,null);assert.equal(p.elements['owner-tools'].hidden,true);
+    await p.elements['copy-obs'].onclick();assert.deepEqual(p.copies,[]);
+  }
 });
