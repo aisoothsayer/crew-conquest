@@ -2,7 +2,9 @@
 
 A Twitch-connected strategy game for AI Soothsayer's crew, adapted from OpenFront. Danny hosts; Twitch viewers join with their names and profile pictures. Modes include host-placed solo bots, viewer-placed autonomous factions, and active multiplayer.
 
-This is public beta `CREW-20261013-17`, hosted at https://danny-crew-conquest.onrender.com/crew.html. Danny hosts; signed-in viewers join. Free-host capacity remains limited and unproven for a full audience.
+This is public beta `CREW-20261013-18`, hosted at https://danny-crew-conquest.onrender.com/crew.html. Danny hosts; signed-in viewers join. Free-host capacity remains limited and unproven for a full audience.
+
+Host control window: `/host-control` uses the existing dedicated Twitch sign-in. It creates/reopens a hosted lobby, starts a round only when the required points are placed, and manually ends a room without declaring a winner. It can communicate with the owner website admin through the bounded, exact-origin `danny-game-control` bridge. No credentials cross that bridge. Keep the child window open; sign-in opens a separate tab so it retains its connection to the admin. New rooms use USA and the existing ordinary defaults; additional settings remain in the lobby. Solo and `/watch/current` are unchanged. See [the control contract](crew-runtime/HOST-CONTROL.md).
 
 The permanent entry sends authenticated viewers directly into Danny's newest open room. Only Danny sees **Bot Free-for-All** and **Play Together** creation controls. When entry is locked or no room exists, viewers can launch quick USA Solo or watch a hosted round. Solo uses a compact USA map, a changing small set of AI rivals, and ordinary rules/economy; no setup form. Bot Free-for-All begins with no generated nations or tribes and open placement, then only placed Twitch factions compete autonomously. A second human is not required to create or start a room; at least one land point is still needed and every active human must be placed. Start closes entry; existing participants can reconnect. Required legal notices and corresponding source remain accessible through **Legal & source**.
 

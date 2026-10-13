@@ -418,6 +418,57 @@ export class GameServer {
 
   private crewPlacementRevision = 0;
   private crewLockedPlayers: Client[] | null = null;
+  private manuallyStopped = false;
+
+  public crewControlInfo() {
+    if (this.phase() === GamePhase.Finished) return null;
+    const players = this.crewStartingPlayers();
+    const ready = players.filter((c) => c.botSpawn !== undefined).length;
+    return {
+      id: this.id,
+      phase: this.hasStarted()
+        ? "live"
+        : this.startsAt !== undefined
+          ? "countdown"
+          : "lobby",
+      players: this.clients.players().length,
+      ready,
+      canStart:
+        !this.hasStarted() &&
+        this.startsAt === undefined &&
+        players.length > 0 &&
+        this.crewReadyToStart() &&
+        ready === players.length,
+    };
+  }
+
+  // The HTTP caller verifies the Crew ticket; ownership is checked again here.
+  // A retry must never cancel the countdown as the socket toggle would.
+  public beginCrewRound(persistentID: string): IntentOutcome {
+    if (
+      process.env.CREW_TWITCH_ONLY !== "true" ||
+      this.isPublic() ||
+      !this.isCreator(persistentID)
+    )
+      return {
+        status: 403,
+        error: "Only this room's verified host can start it.",
+      };
+    if (this.phase() === GamePhase.Finished)
+      return { status: 409, error: "This room has ended." };
+    if (this.hasStarted() || this.startsAt !== undefined)
+      return { status: 200 };
+    return this.handleIntent(
+      { type: "toggle_game_start_timer" },
+      {
+        // Control-only identity: never added to the roster or simulation.
+        clientID: this.lobbyCreatorID ?? "crewctrl",
+        isLobbyCreator: true,
+        isAdmin: false,
+        isAdminBot: false,
+      },
+    );
+  }
   public async placeCrewBot(
     clientID: ClientID,
     position: BotSpawn | null,
@@ -1760,7 +1811,8 @@ export class GameServer {
     });
   }
 
-  async end() {
+  async end(manualStop = false) {
+    this.manuallyStopped ||= manualStop;
     this.ended = true;
     // Close all WebSocket connections
     if (this.endTurnIntervalID) {
@@ -1771,6 +1823,13 @@ export class GameServer {
     // The lobby broadcast would stop itself on its next tick; do not leave a
     // timer holding an ended game until then.
     this.stopLobbyInfoBroadcast();
+    if (this.manuallyStopped) {
+      this.log.info("Host manually stopped the room; no winner settlement", {
+        gameID: this.id,
+      });
+      this.telemetry.matchFinished(this.turns.length);
+      return;
+    }
     // Only a started game has a record to archive: gameStartInfo is built by
     // start(), so a game that ends during prestart has nothing to upload.
     if (this.stage !== "started") {

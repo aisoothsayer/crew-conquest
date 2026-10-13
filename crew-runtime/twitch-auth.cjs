@@ -8,6 +8,7 @@ function publicUser(user,ownerId){return {twitchId:user.id,login:user.login,name
 function safeReturnTo(value){
   if(typeof value!=='string'||value.length>250||!value.startsWith('/')||value.includes('\\'))return '/crew.html';
   const u=new URL(value,'https://crew.invalid');
+  if(u.origin==='https://crew.invalid'&&!u.hash&&u.pathname==='/host-control'&&!u.search)return '/host-control';
   if(u.origin==='https://crew.invalid'&&!u.hash&&u.pathname==='/'&&u.search==='?crewAction=solo')return '/?crewAction=solo';
   if(u.origin!=='https://crew.invalid'||u.hash||!/^\/(?:[a-z]\/)?(?:w[01]\/)?game\/[A-Za-z0-9]{8,10}$/.test(u.pathname))return '/crew.html';
   if([...u.searchParams.keys()].some(k=>k!=='lobby'&&k!=='s'))return '/crew.html';

@@ -7,6 +7,7 @@ const path=require('node:path');
 function route(url,workers=1,websocket=false){
  const u=new URL(url,'http://localhost');
  if(/^\/(?:auth)(?:\/|$)/.test(u.pathname))return {port:9120,path:u.pathname+u.search};
+ if(u.pathname==='/host-control'||u.pathname==='/host-control.js')return {port:9120,path:u.pathname+u.search};
  if(u.pathname.startsWith('/crew-api/'))return {port:9120,path:u.pathname.slice(9)+u.search};
  const w=u.pathname.match(/^\/(?:[a-z]\/)?w(\d+)(\/.*)?$/);
  if(w){const index=Number(w[1]);if(index>=workers)return null;

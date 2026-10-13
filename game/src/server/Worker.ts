@@ -38,6 +38,7 @@ import { z } from "zod";
 import { registerAdminBotRoutes } from "./AdminBotRoutes";
 import { censorPlayer } from "./Censor";
 import { Client } from "./Client";
+import { registerCrewHostRoutes } from "./CrewHostRoutes";
 import { gameApiCors } from "./GameApiCors";
 import { GameManager } from "./GameManager";
 import { registerGamePreviewRoute } from "./GamePreviewRoute";
@@ -547,6 +548,7 @@ export async function startWorker() {
   });
 
   registerAdminBotRoutes({ app, gm, workerId, log });
+  registerCrewHostRoutes(app, gm, workerId);
 
   // WebSocket handling
   wss.on("connection", (ws: WebSocket, req) => {

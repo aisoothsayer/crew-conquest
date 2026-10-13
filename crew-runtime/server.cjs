@@ -2,8 +2,10 @@
 const http=require('node:http');
 const {TwitchAuth,cookieValue}=require('./twitch-auth.cjs');
 const {randomBytes}=require('node:crypto');
+const {createHostControl}=require('./host-control.cjs');
 function createServer(config,deps){
   const auth=new TwitchAuth(config,deps);
+  const hostControl=createHostControl(config,auth,deps);
   async function currentMatch(){
     if(deps?.currentMatch)return deps.currentMatch();
     const matches=await Promise.all(Array.from({length:Number(process.env.NUM_WORKERS||1)},async(_,i)=>{
@@ -23,6 +25,7 @@ function createServer(config,deps){
     const json=(status,data)=>{res.writeHead(status,{'Content-Type':'application/json'});res.end(JSON.stringify(data));};
     try{
       const url=new URL(req.url,config.origin);
+      if(await hostControl.handle(req,res,url,json))return;
       if(req.method==='GET'&&url.pathname==='/entry-current')return json(200,await currentRoom());
       if(req.method==='GET'&&url.pathname==='/observer-current')return json(200,await currentMatch());
       if(req.method==='GET'&&url.pathname==='/observer-session'){
