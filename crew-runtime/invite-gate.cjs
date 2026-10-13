@@ -4,7 +4,9 @@ function inviteGate(identityOrigin='http://127.0.0.1:9120') {
  return async (req,res,next)=>{
   if(req.method!=='GET')return next();
   const target=safeReturnTo(req.originalUrl||req.url);
-  if(target==='/crew.html')return next();
+  // The control shell handles sign-in in a separate tab to preserve its opener.
+  // Its status/write APIs still require the verified host session.
+  if(target==='/crew.html'||target==='/host-control')return next();
   try {
    const r=await fetch(identityOrigin+'/session',{headers:{cookie:req.headers.cookie||''},redirect:'error',signal:AbortSignal.timeout(5000)});
    await r.body?.cancel();

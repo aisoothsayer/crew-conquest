@@ -24,3 +24,11 @@ test('unsigned invitation redirects before starting a lobby socket; signed-in re
   assert.equal(continued,ok);if(!ok){assert.equal(redirect.status,302);assert.equal(redirect.headers.Location,'/auth/login?returnTo=%2Fw0%2Fgame%2FAbcd1234%3Flobby');}
  }}finally{global.fetch=original;}
 });
+
+test('unsigned control window loads its shell without navigating the opener bridge to Twitch',async()=>{
+ const original=global.fetch;let calls=0,continued=false;
+ try{global.fetch=async()=>{calls++;throw Error('Control shell must not authenticate through the invite gate');};
+ await inviteGate()({method:'GET',url:'/host-control',headers:{}},{writeHead(){throw Error('Unexpected redirect');},end(){}},()=>continued=true);
+ assert.equal(continued,true);assert.equal(calls,0);
+ }finally{global.fetch=original;}
+});
