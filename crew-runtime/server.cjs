@@ -13,6 +13,12 @@ function createServer(config,deps){
     }));
     return matches.filter(Boolean).sort((a,b)=>b.createdAt-a.createdAt)[0]||null;
   }
+  async function bettingRoster(){
+    if(deps?.bettingRoster)return deps.bettingRoster();
+    const rooms=await Promise.all(Array.from({length:Number(process.env.NUM_WORKERS||1)},async(_,i)=>{try{const r=await fetch('http://127.0.0.1:'+(3001+i)+'/api/crew-betting/current',{headers:{'x-api-key':process.env.API_KEY||''},signal:AbortSignal.timeout(3000)});if(!r.ok)throw Error();return await r.json();}catch{return {unavailable:true};}}));
+    if(rooms.some(r=>r?.unavailable))throw Error('Game roster unavailable');
+    return rooms.filter(Boolean).sort((a,b)=>b.createdAt-a.createdAt)[0]||null;
+  }
   const server=http.createServer(async(req,res)=>{
     async function currentRoom(){
       if(deps?.currentRoom)return deps.currentRoom();
@@ -26,6 +32,7 @@ function createServer(config,deps){
     try{
       const url=new URL(req.url,config.origin);
       if(await hostControl.handle(req,res,url,json))return;
+      if(req.method==='GET'&&url.pathname==='/betting-roster')return json(200,{schemaVersion:1,kind:'crew',observedAt:Date.now(),room:await bettingRoster()});
       if(req.method==='GET'&&url.pathname==='/entry-current')return json(200,await currentRoom());
       if(req.method==='GET'&&url.pathname==='/observer-current')return json(200,await currentMatch());
       if(req.method==='GET'&&url.pathname==='/observer-session'){

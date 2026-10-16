@@ -420,6 +420,12 @@ export class GameServer {
   private crewLockedPlayers: Client[] | null = null;
   private manuallyStopped = false;
 
+  public crewBettingRoster() {
+    if (process.env.CREW_TWITCH_ONLY !== "true" || this.isPublic()) return null;
+    const players = this.crewLockedPlayers ?? this.crewStartingPlayers();
+    return {roomId:this.id,gameId:this.id+":"+this.createdAt,phase:this.phase()===GamePhase.Finished?"finished":this.hasStarted()?"live":this.startsAt!==undefined?"countdown":"lobby",mode:this.gameConfig.crewMode,players:players.map((c,i)=>({key:c.clientID,participant:c.clientID,name:this.gameConfig.anonymizeNames?"Player "+(i+1):c.username.slice(0,60),computer:this.gameConfig.crewMode==="viewer-bots",connected:this.clients.isConnected(c)}))};
+  }
+
   public crewControlInfo() {
     if (this.phase() === GamePhase.Finished) return null;
     const players = this.crewStartingPlayers();

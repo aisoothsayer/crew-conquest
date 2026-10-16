@@ -33,6 +33,10 @@ export class GameManager {
   public game(id: GameID): GameServer | null {
     return this.games.get(id) ?? null;
   }
+  public currentCrewBettingRoster() {
+    for(const game of [...this.games.values()].reverse()) {const room=game.crewBettingRoster();if(room)return {...room,createdAt:game.createdAt};}return null;
+  }
+
   public currentCrewMatch() {
     return (
       [...this.games.values()]

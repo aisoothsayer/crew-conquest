@@ -93,6 +93,10 @@ export async function startWorker() {
     workerId,
   });
   const gm = new GameManager(log, telemetry, buildHash);
+  app.get("/api/crew-betting/current", (req,res)=>{
+    if(process.env.CREW_TWITCH_ONLY!=="true"||req.headers["x-api-key"]!==ServerEnv.apiKey()){res.status(403).json({error:"Forbidden"});return;}
+    res.setHeader("Cache-Control","no-store");res.json(gm.currentCrewBettingRoster());
+  });
   app.get("/api/crew-entry/current", (req, res) => {
     if (
       process.env.CREW_TWITCH_ONLY !== "true" ||
