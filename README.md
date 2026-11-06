@@ -15,6 +15,7 @@ Lobby maps support wheel/pinch zoom, drag/keyboard pan, +/- and Reset while plac
 - `game/`: modified OpenFront source, resources, tests and dependency lockfile.
 - `crew-runtime/`: Twitch identity, invite gate and HTTP/WebSocket gateway.
 - `Dockerfile`: Node 24 build and single-port runtime.
+- `trading-bot/`: separate paper-only Alpaca trading experiment (not part of the game build); see its [assessment](trading-bot/ASSESSMENT.md).
 
 See [hosting instructions](crew-runtime/HOSTING.md) for build commands, private environment setup and deployment checks. Configure the existing dedicated Danny Crew Strategy Twitch application privately; never commit its credentials.
 
