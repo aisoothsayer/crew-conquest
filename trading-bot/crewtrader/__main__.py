@@ -43,6 +43,8 @@ def main(argv: list[str] | None = None) -> int:
         p = sub.add_parser(name, help=text)
         p.add_argument("--agent", default="claude")
         p.add_argument("--start-equity", type=float, default=10_000.0)
+        p.add_argument("--desk-dir", help="where agent ledgers live, relative to trading-bot/ "
+                                          "(default journal/agents; the shared race uses race)")
         if name == "agent-decide":
             p.add_argument("decision", help='e.g. {"action":"long","symbol":"SOL-USD","leverage":2,"reasoning":"..."}')
 
@@ -79,10 +81,13 @@ def _agent(args) -> int:
     if args.cmd == "agent-prompt":
         print(DECISION_PROMPT)
         return 0
-    from .desk import Desk
+    from .desk import AGENTS_DIR, Desk
     from .market import CoinbaseMarket
+    from .risk import ROOT
 
-    desk = Desk(args.agent, CoinbaseMarket(), start_equity=args.start_equity)
+    base = AGENTS_DIR if not args.desk_dir else Path(args.desk_dir)
+    base = base if base.is_absolute() else ROOT / base
+    desk = Desk(args.agent, CoinbaseMarket(), start_equity=args.start_equity, base_dir=base)
     if args.cmd == "agent-mcp":
         serve(desk)
         return 0

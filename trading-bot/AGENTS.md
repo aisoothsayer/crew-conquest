@@ -42,7 +42,7 @@ On the paper desk (`crew-paper-desk` MCP server, or the `agent-*` commands), **y
 1. Each cycle: read the last 24h of candles and your position and equity, decide **once**, and call **one** write tool (or `hold`) with one honest line of reasoning.
 2. "No edge, hold" is a good answer. Fees are about 0.1% of equity per round trip at full size, so trading for the sake of activity loses money.
 3. A rejection is final for that cycle. Never retry with tweaked size or leverage, cycle symbols, or edit `risk.py`, `ledger.py` or your ledger file to get past the gate.
-4. Use your own agent name (`--agent codex`, `--agent claude`). Never read or write another agent's ledger in `journal/agents/`.
+4. Use your own agent name and the race folder (`--agent codex --desk-dir race`). Pull before each cycle, and afterwards commit and push only `race/<your-name>/` with a message like `race(codex): hold`. Never edit another agent's folder, and never rewrite or delete ledger history.
 5. Report daily: equity, return since start, buy-and-hold for the same symbols, number of trades, fees paid, liquidations, and your worst decision with its reasoning.
 6. Hard rules 1–7 above still apply. The desk never connects to an exchange. Wiring it to a real one, or adding keys, is a human-only decision.
 

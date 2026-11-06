@@ -57,7 +57,9 @@ To stop everything: `touch trading-bot/STOP`.
 
 ## Paper desk (AI-decided, crypto, local ledger)
 
-There is no account to create and no key to set. Prices come from Coinbase's free public API (`api.exchange.coinbase.com`). Each agent gets its own ledger in `journal/agents/<agent>/`, starting at $10,000 of paper money.
+There is no account to create and no key to set. Prices come from Coinbase's free public API (`api.exchange.coinbase.com`). Each agent gets its own ledger, starting at $10,000 of paper money.
+
+**The race** lives in `race/<agent>/` (`ledger.json` + `decisions.jsonl`), tracked in Git so it survives any one machine. Pass `--desk-dir race` to every `agent-*` command. Without it, ledgers go to the ignored `journal/agents/` (use that for experiments). The `claude` and `codex` desks both started 2026-11-06 12:36 UTC with $10,000 each. After each cycle, commit only your own `race/<agent>/` folder.
 
 | Rule | Default |
 |---|---|
@@ -78,7 +80,7 @@ Closing is always allowed, even when halted. Funding payments are not modeled.
 ```toml
 [mcp_servers.crew-paper-desk]
 command = "python3"
-args = ["-m", "crewtrader", "agent-mcp", "--agent", "codex"]
+args = ["-m", "crewtrader", "agent-mcp", "--agent", "codex", "--desk-dir", "race"]
 env = { PYTHONPATH = "/absolute/path/to/crew-conquest/trading-bot" }
 ```
 
@@ -86,9 +88,9 @@ env = { PYTHONPATH = "/absolute/path/to/crew-conquest/trading-bot" }
 
 ```bash
 python3 -m crewtrader agent-prompt                       # the per-cycle instructions
-python3 -m crewtrader agent-decide --agent codex '{"action":"long","symbol":"SOL-USD","leverage":2,"reasoning":"..."}'
-python3 -m crewtrader agent-status --agent codex         # equity, position, distance to liq, buy-and-hold benchmarks
-python3 -m crewtrader agent-tick   --agent codex         # mark to market / liquidation check only
+python3 -m crewtrader agent-decide --agent codex --desk-dir race '{"action":"long","symbol":"SOL-USD","leverage":2,"reasoning":"..."}'
+python3 -m crewtrader agent-status --agent codex --desk-dir race         # equity, position, distance to liq, buy-and-hold benchmarks
+python3 -m crewtrader agent-tick   --agent codex --desk-dir race         # mark to market / liquidation check only
 ```
 
 **Unattended cycles**, e.g. hourly from `trading-bot/`:

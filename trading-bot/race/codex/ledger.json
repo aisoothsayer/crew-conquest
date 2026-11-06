@@ -1,0 +1,18 @@
+{
+ "cash": 10000.0,
+ "day": {
+  "date": "2026-11-06",
+  "start_equity": 10000.0
+ },
+ "fills": [],
+ "last_fill_ts": null,
+ "last_mark_ts": 1793968563.4650502,
+ "position": null,
+ "start_equity": 10000.0,
+ "start_prices": {
+  "BTC-USD": 76047.28,
+  "ETH-USD": 2240.02,
+  "SOL-USD": 90.5
+ },
+ "start_ts": 1793968562.7206104
+}

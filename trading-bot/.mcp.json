@@ -2,7 +2,7 @@
   "mcpServers": {
     "crew-paper-desk": {
       "command": "python3",
-      "args": ["-m", "crewtrader", "agent-mcp", "--agent", "claude"]
+      "args": ["-m", "crewtrader", "agent-mcp", "--agent", "claude", "--desk-dir", "race"]
     }
   }
 }
